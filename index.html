@@ -274,6 +274,51 @@ footer .eye-small { display:inline-block; margin-bottom:1rem; opacity:0.35; }
 .ap-toast.show { transform:translateY(0); opacity:1; }
 .ap-toast.err { border-color:var(--red-border); color:var(--red-fg); }
 
+/* ── LIGHT MODE ── */
+body.light {
+  --ink:#f0e9d8; --ink2:#faf5ea; --ink3:#f5eed9;
+  --text:#1c1510; --text-muted:#7a6a56;
+  --border:rgba(139,100,30,0.22);
+  --purple-soft:rgba(90,63,160,0.07);
+  --gold-glow:rgba(201,168,76,0.1);
+  --red-bg:rgba(180,50,50,0.08); --red-border:rgba(180,50,50,0.28);
+  --green-bg:rgba(40,130,70,0.08); --green-border:rgba(40,130,70,0.25);
+}
+body.light nav { background:rgba(240,233,216,0.92); }
+body.light .ap-overlay { background:var(--ink); }
+body.light .ap-header { background:rgba(240,233,216,0.96); }
+body.light .modal { background:var(--ink2); }
+body.light .field input, body.light .field textarea, body.light .field select,
+body.light .ap-field input, body.light .ap-field textarea,
+body.light .ap-inline-input { background:var(--ink3); color:var(--text); }
+body.light #bg-canvas { opacity:0.18; }
+body.light #geo-svg { opacity:0.06; }
+body.light .post-card, body.light #about .about-card { background:var(--ink2); }
+body.light .post-card:hover, body.light .post-card.expanded { background:var(--ink3); }
+body.light .ap-entry-row, body.light .ap-stat-card, body.light .ap-admin-row,
+body.light .ap-export-card { background:var(--ink2); }
+body.light .ap-export-card:hover, body.light .ap-entry-row:hover { background:var(--ink3); }
+body.light .card-btn, body.light .ap-action-btn { background:var(--ink3); }
+body.light .sigil-badge { background:rgba(90,63,160,0.06); }
+body.light .post-tag { background:rgba(90,63,160,0.07); }
+body.light .lang-toggle { background:var(--ink2); }
+body.light .hero-tagline { color:var(--text-muted); }
+body.light .scroll-hint::after { background:linear-gradient(to bottom,var(--gold-dim),transparent); }
+* { transition: background-color 0.35s, color 0.2s, border-color 0.35s; }
+.eye-icon, .logo-ring-outer, .logo-ring-inner, .logo-orbit, canvas { transition: none !important; }
+
+/* ── THEME TOGGLE BUTTON ── */
+.theme-btn { background:none; border:1px solid var(--border); color:var(--text-muted); font-size:0.85rem; width:32px; height:32px; cursor:pointer; border-radius:2px; display:flex; align-items:center; justify-content:center; transition:border-color 0.3s,background 0.3s; flex-shrink:0; }
+.theme-btn:hover { border-color:var(--gold-dim); background:var(--gold-glow); }
+
+/* ── HERO CLOCK ── */
+.hero-clock { margin-top:2.5rem; display:flex; flex-direction:column; align-items:center; gap:0.5rem; }
+.clock-time { font-family:'Cinzel',serif; font-size:clamp(1.8rem,4.5vw,3rem); letter-spacing:0.18em; color:var(--gold); line-height:1; }
+.clock-colon { display:inline-block; animation:colon-blink 1s step-end infinite; }
+@keyframes colon-blink { 0%,100%{opacity:1;} 50%{opacity:0.15;} }
+.clock-date { font-family:'Cinzel',serif; font-size:0.68rem; letter-spacing:0.28em; text-transform:uppercase; color:var(--text-muted); }
+.clock-divider { width:60px; height:1px; background:linear-gradient(to right,transparent,var(--gold-dim),transparent); margin:0.4rem 0; }
+
 @media(max-width:640px) {
   nav { padding:0.8rem 1rem; }
   .nav-links { display:none; }
@@ -325,6 +370,7 @@ footer .eye-small { display:inline-block; margin-bottom:1rem; opacity:0.35; }
       <span class="lang-sep">|</span>
       <button class="lang-btn" id="btn-no" onclick="setLang('no')">NO</button>
     </div>
+    <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Bytt tema">☀</button>
     <button class="btn-panel" id="btn-panel" onclick="openAdminPanel()">☰ Panel</button>
     <button class="admin-lock-btn" id="admin-lock-btn" onclick="handleAdminBtn()">⚿ Admin</button>
   </div>
@@ -353,6 +399,12 @@ footer .eye-small { display:inline-block; margin-bottom:1rem; opacity:0.35; }
   <p class="hero-sub"     data-i18n="hero_sub"></p>
   <h1 class="hero-title">Third Eye</h1>
   <p class="hero-tagline" data-i18n="hero_tagline"></p>
+  <div class="hero-clock">
+    <div class="clock-divider"></div>
+    <div class="clock-time" id="clock-time">--<span class="clock-colon">:</span>--<span class="clock-colon">:</span>--</div>
+    <div class="clock-date" id="clock-date">· · ·</div>
+    <div class="clock-divider"></div>
+  </div>
   <div class="scroll-hint" data-i18n="scroll_hint"></div>
 </div>
 
@@ -1243,9 +1295,56 @@ function closeIfOverlay(e,id) { if(e.target===document.getElementById(id)) close
 })();
 
 // ══════════════════════════════════════════════════════
+//  THEME (light / dark)
+// ══════════════════════════════════════════════════════
+let theme = localStorage.getItem('te_theme') || 'dark';
+
+function applyTheme(t) {
+  theme = t;
+  document.body.classList.toggle('light', t === 'light');
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.textContent = t === 'light' ? '🌙' : '☀';
+  localStorage.setItem('te_theme', t);
+}
+
+function toggleTheme() {
+  applyTheme(theme === 'dark' ? 'light' : 'dark');
+}
+
+// ══════════════════════════════════════════════════════
+//  LIVE CLOCK
+// ══════════════════════════════════════════════════════
+function startClock() {
+  const DAYS_NO = ['Søndag','Mandag','Tirsdag','Onsdag','Torsdag','Fredag','Lørdag'];
+  const DAYS_EN = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONTHS_NO = ['januar','februar','mars','april','mai','juni','juli','august','september','oktober','november','desember'];
+  const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  function tick() {
+    const now = new Date();
+    const h = String(now.getHours()).padStart(2,'0');
+    const m = String(now.getMinutes()).padStart(2,'0');
+    const s = String(now.getSeconds()).padStart(2,'0');
+    const tEl = document.getElementById('clock-time');
+    const dEl = document.getElementById('clock-date');
+    if (tEl) tEl.innerHTML = `${h}<span class="clock-colon">:</span>${m}<span class="clock-colon">:</span>${s}`;
+    if (dEl) {
+      const isNo = lang === 'no';
+      const day  = isNo ? DAYS_NO[now.getDay()]   : DAYS_EN[now.getDay()];
+      const mon  = isNo ? MONTHS_NO[now.getMonth()]: MONTHS_EN[now.getMonth()];
+      dEl.textContent = `${day}, ${now.getDate()}. ${mon} ${now.getFullYear()}`;
+    }
+  }
+  tick();
+  setInterval(tick, 1000);
+}
+
+// ══════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  applyTheme(theme);
+  startClock();
   setLang(lang);
   updateAdminState();
   document.addEventListener('keydown', e => {
