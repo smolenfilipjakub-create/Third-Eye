@@ -741,10 +741,11 @@ body.light .comment-login-prompt { background:#f4f0e8; }
 .sort-btn.active { background:var(--gold-glow); border-color:var(--gold-dim); color:var(--gold); }
 
 /* ══ POST LIKE BUTTON ══ */
-.post-like-btn { display:flex; align-items:center; gap:0.35rem; background:none; border:1px solid transparent; color:var(--text-muted); font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.1em; padding:0.22rem 0.65rem; border-radius:2px; cursor:pointer; transition:all 0.22s; user-select:none; flex-shrink:0; }
-.post-like-btn:hover { border-color:var(--gold-dim); color:var(--gold); background:var(--gold-glow); }
+.post-like-btn { display:flex; align-items:center; gap:0.3rem; background:none; border:1px solid var(--border); color:var(--text-muted); font-family:'Cinzel',serif; font-size:0.7rem; letter-spacing:0.08em; padding:0.2rem 0.6rem; border-radius:2px; cursor:pointer; transition:all 0.22s cubic-bezier(0.34,1.3,0.64,1); user-select:none; flex-shrink:0; }
+.post-like-btn:hover { border-color:var(--gold-dim); color:var(--gold); background:var(--gold-glow); transform:scale(1.08); }
 .post-like-btn.liked { background:var(--gold-glow); border-color:var(--gold-dim); color:var(--gold); }
-.post-like-btn .like-count { font-size:0.65rem; min-width:10px; }
+.post-like-btn .like-count { font-size:0.68rem; }
+.post-meta { display:flex; align-items:center; gap:1rem; margin-bottom:0.75rem; flex-wrap:wrap; }
 
 /* ══════════════════════════════════════════════════════
    ENHANCED INTERACTIONS & ANIMATIONS
@@ -2085,6 +2086,12 @@ function renderPosts() {
         ${post.tag?`<span class="post-tag clickable" onclick="setTagFilter(event,'${post.tag}')">${post.tag}</span>`:''}
         <span class="post-reading-time">${readTime}</span>
         ${statusBadge}
+        <button class="post-like-btn${hasLikedPost?' liked':''}" id="like-${post._key}"
+          onclick="likePost(event,'${post._key}')"
+          title="${uid?'Lik dette innlegget':'Logg inn for å like'}"
+          style="margin-left:auto;">
+          ♥<span class="like-count">${postLikes ? ' '+postLikes : ''}</span>
+        </button>
       </div>
       <h3 class="post-title">${hl(title)}${transNote}</h3>
       <p class="post-preview">${hl(preview)}</p>
@@ -2092,14 +2099,7 @@ function renderPosts() {
       ${post.survey ? renderSurveyHTML(post._key, post.survey) : ''}
       <div class="post-bottom-row">
         <div class="read-toggle">${tr('read_entry')}</div>
-        <div style="display:flex;align-items:center;gap:0.35rem;">
-          <button class="post-like-btn${hasLikedPost?' liked':''}" id="like-${post._key}"
-            onclick="likePost(event,'${post._key}')"
-            title="${uid?'Lik dette innlegget':'Logg inn for å like'}">
-            ♥ <span class="like-count">${postLikes||''}</span>
-          </button>
-          <button class="post-share-btn" id="share-${post._key}" onclick="sharePost(event,'${post._key}',\`${title.replace(/`/g,"'")}\`)">⬆ Del</button>
-        </div>
+        <button class="post-share-btn" id="share-${post._key}" onclick="sharePost(event,'${post._key}',\`${title.replace(/`/g,"'")}\`)">⬆ Del</button>
       </div>
     `;
     card.addEventListener('click', () => togglePost(card));
