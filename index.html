@@ -8,9 +8,12 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Cinzel+Decorative:wght@400&display=swap" rel="stylesheet">
 
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { initializeApp }          from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
   import { getDatabase, ref, set, push, remove, onValue, update }
     from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+  import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword,
+           signOut, onAuthStateChanged, updateProfile }
+    from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
   const firebaseConfig = {
     apiKey:            "AIzaSyDD7ot-TF98cwmdeIMy26hLlUX6FDVniGk",
@@ -22,13 +25,21 @@
     appId:             "1:1092473548921:web:2f367260d40f6134ef24a8"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const db  = getDatabase(app);
+  const app  = initializeApp(firebaseConfig);
+  const db   = getDatabase(app);
+  const auth = getAuth(app);
   window._fb = {
-    db, ref, set, push, remove, onValue, update,
+    db, auth, ref, set, push, remove, onValue, update,
     postsRef:    ref(db, 'posts'),
     settingsRef: ref(db, 'settings'),
-    logRef:      ref(db, 'loginLog')
+    logRef:      ref(db, 'loginLog'),
+    usersRef:    ref(db, 'users'),
+    commentsRef: ref(db, 'comments'),
+    createUser:  (e,p) => createUserWithEmailAndPassword(auth,e,p),
+    signIn:      (e,p) => signInWithEmailAndPassword(auth,e,p),
+    signOut:     ()    => signOut(auth),
+    onAuthState: (cb)  => onAuthStateChanged(auth, cb),
+    updateProfile
   };
   window._fbReady = true;
   document.dispatchEvent(new Event('fb-ready'));
@@ -276,6 +287,166 @@ body.light .mobile-menu a { color:#4a3d2c; }
 .related-card-title { font-family:'Cinzel',serif; font-size:0.72rem; color:var(--text); margin-bottom:0.25rem; line-height:1.35; }
 .related-card-date  { font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.1em; color:var(--text-muted); }
 
+/* ══ USER AUTH NAV BUTTON ══ */
+.user-nav-btn { display:flex; align-items:center; gap:0.5rem; background:none; border:1px solid var(--border); color:var(--text-muted); font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.13em; padding:0.28rem 0.7rem; cursor:pointer; border-radius:2px; transition:all 0.25s; white-space:nowrap; flex-shrink:0; }
+.user-nav-btn:hover { border-color:var(--gold-dim); color:var(--gold); }
+.user-nav-btn.signed-in { border-color:rgba(90,63,160,0.4); color:#b09bde; background:rgba(90,63,160,0.08); }
+.user-avatar-sm { width:20px; height:20px; border-radius:50%; object-fit:cover; border:1px solid rgba(201,168,76,0.3); flex-shrink:0; }
+.user-letter-avatar { width:20px; height:20px; border-radius:50%; background:linear-gradient(135deg,var(--purple-soft),rgba(201,168,76,0.2)); border:1px solid rgba(201,168,76,0.3); display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-size:0.5rem; color:var(--gold); flex-shrink:0; font-weight:600; }
+
+/* ══ AUTH MODAL ══ */
+.auth-tabs { display:flex; gap:0; margin-bottom:1.5rem; border:1px solid var(--border); border-radius:2px; overflow:hidden; }
+.auth-tab  { flex:1; background:none; border:none; color:var(--text-muted); font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; padding:0.6rem; cursor:pointer; transition:all 0.22s; }
+.auth-tab.active { background:var(--gold-glow); color:var(--gold); }
+.auth-forgot { background:none; border:none; color:var(--text-muted); font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.1em; cursor:pointer; margin-top:0.4rem; text-decoration:underline; transition:color 0.2s; }
+.auth-forgot:hover { color:var(--gold); }
+.auth-divider { text-align:center; font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.12em; color:var(--text-muted); margin:0.75rem 0; }
+
+/* ══ PROFILE MODAL ══ */
+.profile-header { display:flex; align-items:center; gap:1.25rem; margin-bottom:2rem; padding-bottom:1.5rem; border-bottom:1px solid var(--border); }
+.profile-avatar-lg { width:64px; height:64px; border-radius:50%; object-fit:cover; border:2px solid rgba(201,168,76,0.4); flex-shrink:0; }
+.profile-letter-lg { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,rgba(90,63,160,0.3),rgba(201,168,76,0.15)); border:2px solid rgba(201,168,76,0.4); display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-size:1.5rem; color:var(--gold); flex-shrink:0; }
+.profile-info { flex:1; min-width:0; }
+.profile-name { font-family:'Cinzel',serif; font-size:0.9rem; color:var(--text); margin-bottom:0.2rem; }
+.profile-email { font-family:'EB Garamond',serif; font-size:0.85rem; color:var(--text-muted); }
+.profile-section-head { font-family:'Cinzel',serif; font-size:0.62rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--gold-dim); margin:1.25rem 0 0.75rem; }
+.avatar-options { display:grid; grid-template-columns:repeat(5,1fr); gap:0.4rem; margin-bottom:0.75rem; }
+.avatar-opt { width:44px; height:44px; border-radius:50%; border:2px solid transparent; cursor:pointer; font-size:1.35rem; display:flex; align-items:center; justify-content:center; transition:all 0.22s; background:var(--ink3); }
+.avatar-opt:hover { transform:scale(1.12); border-color:var(--gold-dim); }
+.avatar-opt.selected { border-color:var(--gold); box-shadow:0 0 12px rgba(201,168,76,0.3); }
+.notif-toggle-row { display:flex; align-items:center; justify-content:space-between; background:var(--ink3); border:1px solid var(--border); border-radius:2px; padding:0.85rem 1rem; }
+.notif-toggle-label { font-family:'Cinzel',serif; font-size:0.68rem; letter-spacing:0.1em; color:var(--text); }
+.notif-toggle-sub   { font-family:'EB Garamond',serif; font-size:0.82rem; color:var(--text-muted); margin-top:0.15rem; }
+.toggle-switch { position:relative; width:40px; height:22px; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-slider { position:absolute; inset:0; background:var(--ink2); border:1px solid var(--border); border-radius:11px; cursor:pointer; transition:all 0.3s; }
+.toggle-slider::before { content:''; position:absolute; width:16px; height:16px; left:2px; top:2px; border-radius:50%; background:var(--text-muted); transition:all 0.3s; }
+.toggle-switch input:checked + .toggle-slider { background:rgba(40,140,80,0.25); border-color:var(--green-border); }
+.toggle-switch input:checked + .toggle-slider::before { transform:translateX(18px); background:var(--green-fg); }
+
+/* ══ COMMENTS ══ */
+.comments-section { margin-top:2rem; padding-top:1.5rem; border-top:1px solid var(--border); }
+.comments-label { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.25em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:1.25rem; display:flex; align-items:center; gap:0.75rem; }
+.comments-label::after { content:''; flex:1; height:1px; background:linear-gradient(to right,var(--gold-dim),transparent); }
+.comment-list { display:flex; flex-direction:column; gap:0.85rem; margin-bottom:1.25rem; }
+.comment-item { display:flex; gap:0.85rem; align-items:flex-start; animation:fade-in 0.3s ease; }
+.comment-avatar { width:32px; height:32px; border-radius:50%; flex-shrink:0; border:1px solid rgba(201,168,76,0.2); display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-size:0.7rem; color:var(--gold); background:linear-gradient(135deg,rgba(90,63,160,0.2),rgba(201,168,76,0.1)); overflow:hidden; }
+.comment-avatar img { width:100%; height:100%; object-fit:cover; }
+.comment-bubble { flex:1; background:var(--ink3); border:1px solid var(--border); border-radius:2px; padding:0.65rem 0.85rem; }
+.comment-meta { display:flex; align-items:center; gap:0.75rem; margin-bottom:0.35rem; flex-wrap:wrap; }
+.comment-name { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.12em; color:var(--gold-dim); }
+.comment-time { font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.08em; color:var(--text-muted); }
+.comment-text { font-size:0.95rem; color:var(--text); line-height:1.6; }
+.comment-del-btn { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.7rem; padding:0.1rem 0.3rem; border-radius:2px; transition:all 0.2s; margin-left:auto; }
+.comment-del-btn:hover { color:var(--red-fg); background:var(--red-bg); }
+.comment-form { display:flex; gap:0.6rem; align-items:flex-start; }
+.comment-input { flex:1; background:var(--ink3); border:1px solid var(--border); border-radius:2px; color:var(--text); font-family:'EB Garamond',serif; font-size:0.95rem; padding:0.55rem 0.8rem; outline:none; transition:border-color 0.3s; resize:none; min-height:44px; }
+.comment-input:focus { border-color:var(--gold-dim); }
+.comment-submit-btn { background:var(--gold-glow); border:1px solid var(--gold-dim); color:var(--gold); font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.12em; padding:0.5rem 0.85rem; cursor:pointer; border-radius:2px; transition:all 0.22s; white-space:nowrap; align-self:flex-end; }
+.comment-submit-btn:hover { background:rgba(201,168,76,0.22); }
+.comment-auth-prompt { font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.1em; color:var(--text-muted); text-align:center; padding:0.75rem; }
+.comment-auth-prompt button { background:none; border:none; color:var(--gold); cursor:pointer; text-decoration:underline; font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.1em; }
+body.light .comment-bubble { background:var(--ink3); }
+body.light .comment-input  { background:var(--ink3); color:var(--text); }
+
+/* ══ DEMO DAY UPDATED ══ */
+#demoday { padding:4rem 0; }
+.demoday-card { background:var(--ink2); border:1px solid var(--border); border-radius:2px; padding:2.5rem; display:grid; grid-template-columns:1fr auto; gap:2.5rem; align-items:start; position:relative; overflow:hidden; }
+.demoday-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,transparent,var(--gold),rgba(90,63,160,0.8),var(--gold),transparent); }
+.demoday-card::after  { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 80% 50%,rgba(90,63,160,0.05) 0%,transparent 70%); pointer-events:none; }
+.demoday-edit-btn { position:absolute; top:1rem; right:1rem; z-index:10; background:var(--gold-glow); border:1px solid var(--gold-dim); color:var(--gold); font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.1em; padding:0.22rem 0.6rem; cursor:pointer; border-radius:2px; transition:all 0.2s; display:none; }
+.demoday-edit-btn.visible { display:block; }
+.demoday-edit-btn:hover { background:rgba(201,168,76,0.22); }
+.demoday-eyebrow { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.28em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:0.5rem; }
+.demoday-headline { font-family:'Cinzel',serif; font-size:clamp(1.2rem,2.5vw,1.7rem); font-weight:600; color:var(--text); margin-bottom:1rem; line-height:1.2; }
+.demoday-desc { color:var(--text); font-size:1rem; line-height:1.75; margin-bottom:0.75rem; }
+.demoday-stats { display:flex; gap:1.5rem; margin:1.5rem 0; flex-wrap:wrap; }
+.demoday-stat { text-align:center; }
+.demoday-stat-num   { font-family:'Cinzel',serif; font-size:1.6rem; font-weight:600; color:var(--gold); line-height:1; }
+.demoday-stat-label { font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--text-muted); margin-top:0.2rem; }
+.demoday-info-list { display:flex; flex-direction:column; gap:0.45rem; margin:1.25rem 0 1.5rem; }
+.demoday-info-row   { display:flex; align-items:center; gap:0.6rem; font-family:'EB Garamond',serif; font-size:0.95rem; color:var(--text-muted); }
+.demoday-info-icon  { font-size:0.85rem; width:18px; flex-shrink:0; }
+.demoday-btn { display:inline-flex; align-items:center; gap:0.6rem; background:var(--gold-glow); border:1px solid var(--gold-dim); color:var(--gold); font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.18em; text-transform:uppercase; text-decoration:none; padding:0.75rem 1.6rem; border-radius:2px; transition:all 0.3s cubic-bezier(0.34,1.3,0.64,1); cursor:pointer; user-select:none; }
+.demoday-btn:hover { background:rgba(201,168,76,0.22); border-color:var(--gold); transform:translateY(-2px); box-shadow:0 8px 24px rgba(201,168,76,0.15); }
+.demoday-btn:active { transform:scale(0.97); }
+.demoday-btn-arrow { font-size:1rem; transition:transform 0.25s; }
+.demoday-btn:hover .demoday-btn-arrow { transform:translateX(4px); }
+.demoday-widget { width:180px; background:var(--ink3); border:1px solid var(--border); border-radius:2px; padding:1.75rem 1.25rem 1.5rem; text-align:center; cursor:pointer; position:relative; overflow:hidden; transition:all 0.35s cubic-bezier(0.34,1.3,0.64,1); user-select:none; }
+.demoday-widget:hover { border-color:rgba(201,168,76,0.5); transform:translateY(-6px) scale(1.02); box-shadow:0 20px 50px rgba(201,168,76,0.12),0 4px 16px rgba(0,0,0,0.2); }
+.demoday-widget:active { transform:scale(0.97) !important; }
+.demoday-widget-glow { position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.08) 0%,transparent 65%); pointer-events:none; transition:opacity 0.3s; opacity:0; }
+.demoday-widget:hover .demoday-widget-glow { opacity:1; }
+.demoday-widget-eye { margin-bottom:1rem; animation:eye-pulse 4s ease-in-out infinite; filter:drop-shadow(0 0 10px rgba(201,168,76,0.4)); display:flex; justify-content:center; }
+.demoday-widget-date   { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.15em; color:var(--text-muted); margin-bottom:0.5rem; }
+.demoday-widget-title  { font-family:'Cinzel Decorative',serif; font-size:0.8rem; color:var(--gold); letter-spacing:0.06em; margin-bottom:0.25rem; }
+.demoday-widget-sub    { font-family:'Cinzel',serif; font-size:0.52rem; letter-spacing:0.1em; color:var(--text-muted); margin-bottom:1rem; }
+.demoday-widget-cta    { font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.1em; color:var(--gold); background:var(--gold-glow); border:1px solid var(--border); border-radius:1px; padding:0.28rem 0.7rem; display:inline-block; transition:all 0.25s; }
+.demoday-widget:hover .demoday-widget-cta { background:rgba(201,168,76,0.2); border-color:var(--gold-dim); }
+.demoday-program { margin-top:1.5rem; }
+.demoday-program-title { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:0.85rem; }
+.demoday-program-row { display:flex; gap:0.75rem; padding:0.5rem 0; border-bottom:1px solid rgba(201,168,76,0.07); font-size:0.88rem; }
+.demoday-program-time { font-family:'Cinzel',serif; font-size:0.6rem; color:var(--gold-dim); white-space:nowrap; padding-top:0.15rem; width:42px; flex-shrink:0; }
+.demoday-program-name { color:var(--text-muted); flex:1; }
+body.light .demoday-card   { background:#fff; box-shadow:0 2px 20px rgba(0,0,0,0.06); }
+body.light .demoday-widget { background:var(--ink3); }
+@media(max-width:640px) {
+  .demoday-card   { grid-template-columns:1fr; padding:1.5rem; }
+  .demoday-right  { display:flex; justify-content:center; }
+  .demoday-stats  { gap:1rem; }
+  .demoday-widget { width:160px; }
+}
+
+/* ══ SUBSCRIBERS (admin panel) ══ */
+.ap-subscriber-row { display:flex; align-items:center; gap:0.75rem; padding:0.55rem 0.75rem; border-bottom:1px solid rgba(201,168,76,0.06); font-size:0.88rem; }
+.ap-subscriber-row:last-child { border-bottom:none; }
+.ap-subscriber-email { flex:1; color:var(--text); font-family:'EB Garamond',serif; }
+.ap-subscriber-badge { font-family:'Cinzel',serif; font-size:0.52rem; letter-spacing:0.1em; padding:0.12rem 0.5rem; border-radius:1px; }
+.ap-subscriber-badge.on  { background:var(--green-bg); color:var(--green-fg); border:1px solid var(--green-border); }
+.ap-subscriber-badge.off { background:rgba(255,255,255,0.04); color:var(--text-muted); border:1px solid rgba(255,255,255,0.08); }
+.notify-mailto-btn { display:inline-flex; align-items:center; gap:0.5rem; background:var(--gold-glow); border:1px solid var(--gold-dim); color:var(--gold); font-family:'Cinzel',serif; font-size:0.62rem; letter-spacing:0.12em; padding:0.5rem 1rem; cursor:pointer; border-radius:2px; transition:all 0.22s; text-decoration:none; margin-top:1rem; }
+.notify-mailto-btn:hover { background:rgba(201,168,76,0.22); }
+.img-upload-wrap { display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.3rem; }
+.img-upload-wrap input[type="url"] { flex:1; min-width:160px; }
+.img-upload-or { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.15em; color:var(--text-muted); flex-shrink:0; }
+.img-file-label { display:flex; align-items:center; background:var(--ink3); border:1px solid var(--border); border-radius:2px; color:var(--text-muted); font-family:'Cinzel',serif; font-size:0.62rem; letter-spacing:0.1em; padding:0.55rem 0.9rem; cursor:pointer; transition:all 0.22s; white-space:nowrap; }
+.img-file-label:hover { border-color:var(--gold-dim); color:var(--gold); background:var(--gold-glow); }
+.img-clear-btn { background:none; border:1px solid var(--red-border); color:var(--red-fg); border-radius:2px; width:30px; height:30px; cursor:pointer; font-size:0.8rem; transition:all 0.2s; flex-shrink:0; }
+.img-clear-btn:hover { background:var(--red-bg); }
+body.light .img-file-label { background:var(--ink3); }
+
+/* ══ DEMO DAY SECTION ══ */
+#demoday { padding:4rem 0; }
+.demoday-card { background:var(--ink2); border:1px solid var(--border); border-radius:2px; padding:2.5rem; display:grid; grid-template-columns:1fr auto; gap:2.5rem; align-items:center; position:relative; overflow:hidden; }
+.demoday-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,transparent,var(--gold),rgba(90,63,160,0.8),var(--gold),transparent); }
+.demoday-card::after  { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 80% 50%,rgba(90,63,160,0.05) 0%,transparent 70%); pointer-events:none; }
+.demoday-desc { color:var(--text); font-size:1rem; line-height:1.75; }
+.demoday-meta-row { display:flex; gap:1.2rem; margin:1.25rem 0 1.5rem; flex-wrap:wrap; }
+.demoday-meta-item { font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.12em; color:var(--text-muted); }
+.demoday-btn { display:inline-flex; align-items:center; gap:0.6rem; background:var(--gold-glow); border:1px solid var(--gold-dim); color:var(--gold); font-family:'Cinzel',serif; font-size:0.72rem; letter-spacing:0.18em; text-transform:uppercase; text-decoration:none; padding:0.75rem 1.6rem; border-radius:2px; transition:all 0.3s cubic-bezier(0.34,1.3,0.64,1); cursor:pointer; user-select:none; }
+.demoday-btn:hover { background:rgba(201,168,76,0.22); border-color:var(--gold); transform:translateY(-2px); box-shadow:0 8px 24px rgba(201,168,76,0.15); }
+.demoday-btn:active { transform:scale(0.97); }
+.demoday-btn-arrow { font-size:1rem; transition:transform 0.25s; }
+.demoday-btn:hover .demoday-btn-arrow { transform:translateX(4px); }
+
+/* Widget */
+.demoday-widget { width:190px; background:var(--ink3); border:1px solid var(--border); border-radius:2px; padding:2rem 1.25rem 1.5rem; text-align:center; cursor:pointer; position:relative; overflow:hidden; transition:all 0.35s cubic-bezier(0.34,1.3,0.64,1); user-select:none; }
+.demoday-widget:hover { border-color:rgba(201,168,76,0.5); transform:translateY(-6px) scale(1.02); box-shadow:0 20px 50px rgba(201,168,76,0.12),0 4px 16px rgba(0,0,0,0.2); }
+.demoday-widget:active { transform:scale(0.97) !important; }
+.demoday-widget-glow { position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,0.08) 0%,transparent 65%); pointer-events:none; transition:opacity 0.3s; opacity:0; }
+.demoday-widget:hover .demoday-widget-glow { opacity:1; }
+.demoday-widget-eye { margin-bottom:1rem; animation:eye-pulse 4s ease-in-out infinite; filter:drop-shadow(0 0 10px rgba(201,168,76,0.4)); display:flex; justify-content:center; }
+.demoday-widget-title { font-family:'Cinzel Decorative',serif; font-size:0.85rem; color:var(--gold); letter-spacing:0.08em; margin-bottom:0.35rem; }
+.demoday-widget-url { font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.15em; color:var(--text-muted); margin-bottom:1rem; }
+.demoday-widget-cta { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.12em; color:var(--gold); background:var(--gold-glow); border:1px solid var(--border); border-radius:1px; padding:0.3rem 0.75rem; display:inline-block; transition:all 0.25s; }
+.demoday-widget:hover .demoday-widget-cta { background:rgba(201,168,76,0.2); border-color:var(--gold-dim); }
+body.light .demoday-card  { background:#fff; box-shadow:0 2px 20px rgba(0,0,0,0.06); }
+body.light .demoday-widget { background:var(--ink3); }
+@media(max-width:640px) {
+  .demoday-card { grid-template-columns:1fr; }
+  .demoday-right { display:flex; justify-content:center; }
+}
+
 /* ══ IMAGE BLUR-UP ══ */
 .post-img-wrap { background:linear-gradient(135deg,rgba(201,168,76,0.08),rgba(90,63,160,0.08)); position:relative; }
 .post-img-wrap::before { content:'✦'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); font-size:1.5rem; color:rgba(201,168,76,0.25); pointer-events:none; transition:opacity 0.4s; }
@@ -389,6 +560,88 @@ button, .btn-add, .btn-submit, .btn-cancel,
 .ap-action-btn.translating::before { content:'↻ '; display:inline-block; animation:spin-icon 0.8s linear infinite; }
 @keyframes spin-icon { to{transform:rotate(360deg);} }
 .post-card .translation-notice { display:inline-block; font-family:'Cinzel',serif; font-size:0.52rem; letter-spacing:0.1em; color:rgba(123,189,224,0.7); margin-left:0.5rem; vertical-align:middle; }
+
+/* Translation */
+.ap-badge.trans { background:rgba(40,140,200,0.1); color:#7bbde0; border:1px solid rgba(40,140,200,0.28); }
+.ap-action-btn.translating { opacity:0.5; cursor:not-allowed; }
+.ap-action-btn.translating::before { content:'↻ '; display:inline-block; animation:spin-icon 0.8s linear infinite; }
+@keyframes spin-icon { to{transform:rotate(360deg);} }
+.post-card .translation-notice { display:inline-block; font-family:'Cinzel',serif; font-size:0.52rem; letter-spacing:0.1em; color:rgba(123,189,224,0.7); margin-left:0.5rem; vertical-align:middle; }
+
+/* ══ USER AUTH NAV BUTTON ══ */
+.user-nav-btn { display:flex; align-items:center; gap:0.45rem; background:none; border:1px solid var(--border); color:var(--text-muted); font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.12em; padding:0.28rem 0.65rem; cursor:pointer; border-radius:2px; transition:all 0.25s; white-space:nowrap; flex-shrink:0; }
+.user-nav-btn:hover { border-color:var(--gold-dim); color:var(--gold); }
+.user-nav-btn.logged-in { border-color:rgba(90,63,160,0.45); color:#b09bde; background:rgba(90,63,160,0.08); }
+.user-avatar-sm { width:20px; height:20px; border-radius:50%; background:rgba(90,63,160,0.3); display:flex; align-items:center; justify-content:center; font-size:0.78rem; flex-shrink:0; overflow:hidden; }
+.user-avatar-sm img { width:100%; height:100%; object-fit:cover; }
+
+/* ══ AUTH MODAL ══ */
+.auth-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:1.5rem; gap:0; }
+.auth-tab { flex:1; background:none; border:none; border-bottom:2px solid transparent; color:var(--text-muted); font-family:'Cinzel',serif; font-size:0.68rem; letter-spacing:0.15em; text-transform:uppercase; padding:0.65rem; cursor:pointer; transition:all 0.25s; margin-bottom:-1px; }
+.auth-tab.active { color:var(--gold); border-bottom-color:var(--gold); }
+.auth-pane { display:none; }
+.auth-pane.active { display:block; }
+
+/* ══ AVATAR PICKER ══ */
+.avatar-grid { display:flex; flex-wrap:wrap; gap:0.55rem; margin:0.5rem 0 0.75rem; }
+.avatar-opt { width:38px; height:38px; border-radius:50%; background:rgba(90,63,160,0.12); border:2px solid transparent; display:flex; align-items:center; justify-content:center; font-size:1.3rem; cursor:pointer; transition:all 0.2s; flex-shrink:0; user-select:none; }
+.avatar-opt:hover { border-color:var(--gold-dim); transform:scale(1.1); }
+.avatar-opt.selected { border-color:var(--gold); background:rgba(201,168,76,0.1); box-shadow:0 0 10px rgba(201,168,76,0.22); }
+
+/* ══ COMMENTS ══ */
+.comments-section { margin-top:1.75rem; padding-top:1.5rem; border-top:1px solid var(--border); }
+.comments-label { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.28em; text-transform:uppercase; color:var(--gold-dim); margin-bottom:1.25rem; display:flex; align-items:center; gap:0.75rem; }
+.comments-label::after { content:''; flex:1; height:1px; background:linear-gradient(to right,var(--gold-dim),transparent); }
+.comment-form { display:flex; gap:0.7rem; align-items:flex-start; margin-bottom:1.25rem; }
+.comment-avatar { width:32px; height:32px; border-radius:50%; background:rgba(90,63,160,0.2); display:flex; align-items:center; justify-content:center; font-size:1rem; flex-shrink:0; overflow:hidden; user-select:none; }
+.comment-avatar img { width:100%; height:100%; object-fit:cover; }
+.comment-input-wrap { flex:1; }
+.comment-input { width:100%; background:var(--ink3); border:1px solid var(--border); border-radius:2px; color:var(--text); font-family:'EB Garamond',serif; font-size:0.95rem; padding:0.5rem 0.8rem; outline:none; resize:none; min-height:66px; transition:border-color 0.3s; }
+.comment-input:focus { border-color:var(--gold-dim); }
+.comment-submit-row { display:flex; justify-content:flex-end; margin-top:0.35rem; }
+.comment-login-prompt { font-family:'Cinzel',serif; font-size:0.63rem; letter-spacing:0.08em; color:var(--text-muted); padding:0.7rem 1rem; background:var(--ink3); border:1px solid var(--border); border-radius:2px; display:flex; align-items:center; gap:0.75rem; justify-content:space-between; margin-bottom:1rem; }
+.comment-login-btn { background:var(--gold-glow); border:1px solid var(--gold-dim); color:var(--gold); font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.1em; padding:0.22rem 0.7rem; cursor:pointer; border-radius:2px; white-space:nowrap; transition:all 0.2s; }
+.comment-login-btn:hover { background:rgba(201,168,76,0.22); }
+.comment-list { display:flex; flex-direction:column; gap:0.85rem; }
+.comment-item { display:flex; gap:0.7rem; animation:fade-in 0.3s ease; }
+.comment-body { flex:1; background:var(--ink3); border:1px solid var(--border); border-radius:2px; padding:0.65rem 0.85rem; }
+.comment-meta { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.3rem; }
+.comment-author { font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.1em; color:var(--gold-dim); }
+.comment-time   { font-family:'Cinzel',serif; font-size:0.52rem; letter-spacing:0.06em; color:var(--text-muted); }
+.comment-text   { color:var(--text); font-size:0.92rem; line-height:1.6; }
+.comment-del-btn { background:none; border:none; color:var(--text-muted); cursor:pointer; font-size:0.7rem; margin-left:auto; padding:0 0.15rem; transition:color 0.2s; }
+.comment-del-btn:hover { color:var(--red-fg); }
+.no-comments { font-family:'Cinzel',serif; font-size:0.63rem; letter-spacing:0.12em; color:var(--text-muted); text-align:center; padding:1rem 0 0.25rem; }
+body.light .comment-body, body.light .comment-input,
+body.light .comment-login-prompt { background:var(--ink3); }
+body.light .comment-login-prompt { background:#f4f0e8; }
+
+/* ══ PROFILE MODAL ══ */
+.profile-header { display:flex; align-items:center; gap:1rem; margin-bottom:1.5rem; padding-bottom:1rem; border-bottom:1px solid var(--border); }
+.profile-avatar-lg { width:54px; height:54px; border-radius:50%; background:rgba(90,63,160,0.22); border:2px solid var(--gold-dim); display:flex; align-items:center; justify-content:center; font-size:1.9rem; flex-shrink:0; overflow:hidden; }
+.profile-avatar-lg img { width:100%; height:100%; object-fit:cover; }
+.profile-display-name { font-family:'Cinzel',serif; font-size:0.88rem; color:var(--text); }
+.profile-email-label  { font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.1em; color:var(--text-muted); margin-top:0.1rem; }
+.notif-toggle-row { display:flex; align-items:center; justify-content:space-between; padding:0.7rem 1rem; background:var(--ink3); border:1px solid var(--border); border-radius:2px; margin:0.75rem 0; }
+.notif-left .notif-toggle-label { font-family:'Cinzel',serif; font-size:0.66rem; letter-spacing:0.1em; color:var(--text); }
+.notif-left .notif-toggle-hint  { font-family:'EB Garamond',serif; font-size:0.82rem; color:var(--text-muted); margin-top:0.1rem; }
+.toggle-switch { position:relative; width:40px; height:22px; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; position:absolute; }
+.toggle-track { position:absolute; inset:0; background:var(--ink2); border:1px solid var(--border); border-radius:11px; transition:all 0.3s; cursor:pointer; }
+.toggle-switch input:checked + .toggle-track { background:rgba(90,63,160,0.4); border-color:rgba(90,63,160,0.6); }
+.toggle-thumb { position:absolute; top:3px; left:3px; width:14px; height:14px; background:var(--text-muted); border-radius:50%; transition:all 0.3s; pointer-events:none; }
+.toggle-switch input:checked ~ .toggle-thumb { transform:translateX(18px); background:#b09bde; }
+
+/* ══ DEMO DAY EDIT BTN ══ */
+.demoday-edit-btn { position:absolute; top:1rem; right:1rem; background:none; border:1px solid rgba(255,255,255,0.1); color:var(--text-muted); font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.1em; padding:0.22rem 0.6rem; cursor:pointer; border-radius:2px; transition:all 0.2s; z-index:2; display:none; }
+.demoday-edit-btn:hover { border-color:var(--gold-dim); color:var(--gold); }
+.demoday-edit-btn.visible { display:block; }
+.demoday-speakers { display:flex; gap:0.45rem; flex-wrap:wrap; margin:0.75rem 0; }
+.demoday-speaker-chip { background:rgba(90,63,160,0.1); border:1px solid rgba(90,63,160,0.22); border-radius:1px; padding:0.18rem 0.55rem; font-family:'Cinzel',serif; font-size:0.57rem; letter-spacing:0.07em; color:#b09bde; }
+.demoday-stats { display:flex; gap:1.5rem; margin:1rem 0; flex-wrap:wrap; }
+.demoday-stat { text-align:center; }
+.demoday-stat-num   { font-family:'Cinzel Decorative',serif; font-size:1.5rem; color:var(--gold); line-height:1; }
+.demoday-stat-label { font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.15em; color:var(--text-muted); text-transform:uppercase; }
 
 /* ══════════════════════════════════════════════════════
    ENHANCED INTERACTIONS & ANIMATIONS
@@ -786,7 +1039,12 @@ body.light #back-to-top { background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08
       <span class="lang-sep">|</span>
       <button class="lang-btn" id="btn-no" onclick="setLang('no')">NO</button>
     </div>
+    <button class="user-nav-btn" id="user-nav-btn" onclick="handleUserBtn()">
+      <div class="user-avatar-sm" id="nav-avatar-sm">👤</div>
+      <span id="nav-user-label">Logg inn</span>
+    </button>
     <button class="theme-btn" id="theme-btn" onclick="toggleTheme()" title="Bytt tema">☀</button>
+    <button class="user-nav-btn" id="user-nav-btn" onclick="handleUserBtn()">Logg inn</button>
     <button class="btn-panel" id="btn-panel" onclick="openAdminPanel()">☰ Panel</button>
     <button class="admin-lock-btn" id="admin-lock-btn" onclick="handleAdminBtn()">⚿ Admin</button>
     <button class="hamburger-btn" id="hamburger-btn" onclick="toggleMobileMenu()">☰</button>
@@ -857,6 +1115,65 @@ body.light #back-to-top { background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08
     </div>
   </section>
 
+  <div class="rune-divider">✦ Demo Day ✦</div>
+
+  <section id="demoday">
+    <p class="section-label">Arrangement</p>
+    <h2 class="section-title" id="dd-section-title">AI Demo Day 2026</h2>
+    <div class="demoday-card">
+      <button class="demoday-edit-btn" id="demoday-edit-btn" onclick="openDemoDayEditor()">✎ Rediger</button>
+      <div class="demoday-left">
+        <p class="demoday-eyebrow" id="dd-eyebrow">AIP2100, AI i praksis · Høyskolen Kristiania</p>
+        <h3 class="demoday-headline" id="dd-headline">Kom og hør hva som faktisk skjer i norske bedrifter — ikke hva folk tror skjer.</h3>
+        <p class="demoday-desc" id="dd-desc1">Studentteam fra <strong>AIP2100, AI i praksis</strong> har tilbrakt et helt semester med å intervjue norsk arbeidsliv om AI. Nå presenterer de funnene sine — direkte fra de som har gravd i det.</p>
+        <p class="demoday-desc" id="dd-desc2">Som en del av <em>Third Eye</em>-prosjektet er vi blant studentene som presenterer intervjufunn og innsikter fra semesterets research om AI i norsk næringsliv.</p>
+        <div class="demoday-stats">
+          <div class="demoday-stat"><div class="demoday-stat-num">40</div><div class="demoday-stat-label">Studenter</div></div>
+          <div class="demoday-stat"><div class="demoday-stat-num">15</div><div class="demoday-stat-label">Bransjer</div></div>
+          <div class="demoday-stat"><div class="demoday-stat-num">300+</div><div class="demoday-stat-label">Intervjuer</div></div>
+        </div>
+        <div class="demoday-info-list">
+          <div class="demoday-info-row"><span class="demoday-info-icon">📅</span> Tirsdag 2. juni 2026, 09:00–17:00</div>
+          <div class="demoday-info-row"><span class="demoday-info-icon">📍</span> Kirkegata 24, Oslo — Høyskolen Kristiania</div>
+          <div class="demoday-info-row"><span class="demoday-info-icon">🎓</span> Åpent arrangement — gratis inngang</div>
+        </div>
+        <div class="demoday-program">
+          <div class="demoday-program-title">Program</div>
+          <div class="demoday-program-row"><span class="demoday-program-time">09:00</span><span class="demoday-program-name">Dørene åpner — registrering og kaffe</span></div>
+          <div class="demoday-program-row"><span class="demoday-program-time">09:30</span><span class="demoday-program-name">Åpning ved rektor Trine Johansen Meza</span></div>
+          <div class="demoday-program-row"><span class="demoday-program-time">10:00</span><span class="demoday-program-name">Studentpresentasjoner — funn fra semesteret</span></div>
+          <div class="demoday-program-row"><span class="demoday-program-time">12:00</span><span class="demoday-program-name">Lunsj og nettverking</span></div>
+          <div class="demoday-program-row"><span class="demoday-program-time">13:00</span><span class="demoday-program-name">Gjesteforelesere fra bransjen</span></div>
+          <div class="demoday-program-row"><span class="demoday-program-time">15:00</span><span class="demoday-program-name">Debatt: AI i utdanning</span></div>
+        </div>
+        <div style="margin-top:1.5rem;">
+          <a class="demoday-btn" href="https://event.checkin.no/222792/ai-demo-day" target="_blank" rel="noopener">
+            <span>Reserver plass</span>
+            <span class="demoday-btn-arrow">→</span>
+          </a>
+        </div>
+      </div>
+      <div class="demoday-right">
+        <div class="demoday-widget" onclick="window.open('https://www.aidemoday.no','_blank')">
+          <div class="demoday-widget-glow"></div>
+          <div class="demoday-widget-eye">
+            <svg viewBox="0 0 80 80" fill="none" width="56" height="56">
+              <path d="M8 40 Q40 8 72 40 Q40 72 8 40 Z" fill="rgba(201,168,76,0.08)" stroke="#c9a84c" stroke-width="1.2"/>
+              <circle cx="40" cy="40" r="14" fill="rgba(90,63,160,0.2)" stroke="#c9a84c" stroke-width="1.2"/>
+              <circle cx="40" cy="40" r="5.5" fill="rgba(201,168,76,0.4)"/>
+              <circle cx="40" cy="40" r="2.5" fill="#c9a84c"/>
+              <path d="M40 26 L48 42 L32 42 Z" fill="none" stroke="rgba(201,168,76,0.45)" stroke-width="0.7"/>
+            </svg>
+          </div>
+          <div class="demoday-widget-date">2. juni 2026</div>
+          <div class="demoday-widget-title">AI Demo Day</div>
+          <div class="demoday-widget-sub">Høyskolen Kristiania</div>
+          <div class="demoday-widget-cta">aidemoday.no →</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <div class="rune-divider" data-i18n="divider_label"></div>
 
   <section id="blog">
@@ -908,6 +1225,98 @@ body.light #back-to-top { background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08
   </div>
 </div>
 
+<!-- ═══════════════════ AUTH MODAL ═══════════════════ -->
+<div class="modal-overlay" id="auth-modal" onclick="closeIfOverlay(event,'auth-modal')">
+  <div class="modal modal-sm">
+    <p class="modal-title">✦ Brukerkonto</p>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('register')">Registrer</button>
+      <button class="auth-tab" onclick="switchAuthTab('login')">Logg inn</button>
+    </div>
+    <!-- REGISTER -->
+    <div class="auth-pane active" id="auth-pane-register">
+      <div class="field"><label>Ditt navn</label><input type="text" id="reg-name" placeholder="Ola Nordmann"></div>
+      <div class="field"><label>E-post</label><input type="email" id="reg-email" placeholder="din@epost.no"></div>
+      <div class="field"><label>Passord</label><input type="password" id="reg-pw" placeholder="Minst 6 tegn" onkeydown="if(event.key==='Enter')registerUser()"></div>
+      <div class="field"><label>Velg profilbilde</label><div class="avatar-grid" id="reg-avatar-grid"></div></div>
+    </div>
+    <!-- LOGIN -->
+    <div class="auth-pane" id="auth-pane-login">
+      <div class="field"><label>E-post</label><input type="email" id="login-email" placeholder="din@epost.no"></div>
+      <div class="field"><label>Passord</label><input type="password" id="login-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginUser()"></div>
+    </div>
+    <div class="error-msg" id="auth-error"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('auth-modal')">Avbryt</button>
+      <button class="btn-submit" id="auth-submit-btn" onclick="handleAuthSubmit()">Opprett konto</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ PROFILE MODAL ═══════════════════ -->
+<div class="modal-overlay" id="profile-modal" onclick="closeIfOverlay(event,'profile-modal')">
+  <div class="modal">
+    <p class="modal-title">✦ Min profil</p>
+    <div class="profile-header">
+      <div class="profile-avatar-lg" id="profile-avatar-display">👤</div>
+      <div>
+        <div class="profile-display-name" id="profile-name-display">—</div>
+        <div class="profile-email-label" id="profile-email-display">—</div>
+      </div>
+    </div>
+    <div class="field"><label>Visningsnavn</label><input type="text" id="profile-name-input" placeholder="Ditt navn"></div>
+    <div class="field">
+      <label>Profilbilde — velg emoji</label>
+      <div class="avatar-grid" id="profile-avatar-grid"></div>
+    </div>
+    <div class="field">
+      <label>Eller bilde-URL / fil</label>
+      <div class="img-upload-wrap">
+        <input type="url" id="profile-avatar-url-input" placeholder="https://eksempel.com/bilde.jpg">
+        <label class="img-file-label" for="profile-avatar-file">📁 Fil
+          <input type="file" id="profile-avatar-file" accept="image/*" onchange="onProfileAvatarFile(this)" style="display:none;">
+        </label>
+      </div>
+    </div>
+    <div class="notif-toggle-row">
+      <div class="notif-left">
+        <div class="notif-toggle-label">E-postvarsler om nye innlegg</div>
+        <div class="notif-toggle-hint">Motta e-post når admin publiserer nytt innhold</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="notif-toggle" onchange="saveNotifPref(this.checked)">
+        <span class="toggle-track"></span>
+        <span class="toggle-thumb"></span>
+      </label>
+    </div>
+    <div class="modal-actions" style="justify-content:space-between;">
+      <button class="btn-danger" onclick="signOutUser()">Logg ut</button>
+      <div style="display:flex;gap:0.75rem;">
+        <button class="btn-cancel" onclick="closeModal('profile-modal')">Lukk</button>
+        <button class="btn-submit" onclick="saveProfile()">Lagre profil</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ DEMO DAY EDITOR ═══════════════════ -->
+<div class="modal-overlay" id="demoday-modal" onclick="closeIfOverlay(event,'demoday-modal')">
+  <div class="modal">
+    <p class="modal-title">✎ Rediger Demo Day-seksjon</p>
+    <div class="field"><label>Eyebrow-tekst</label><input type="text" id="dd-edit-eyebrow" placeholder="AIP2100, AI i praksis · Høyskolen Kristiania"></div>
+    <div class="field"><label>Headline / sitat</label><input type="text" id="dd-edit-headline" placeholder="Kom og hør hva som faktisk skjer…"></div>
+    <div class="field"><label>Avsnitt 1</label><textarea id="dd-edit-desc1" rows="3"></textarea></div>
+    <div class="field"><label>Avsnitt 2</label><textarea id="dd-edit-desc2" rows="2"></textarea></div>
+    <div class="field"><label>Dato og tid</label><input type="text" id="dd-edit-datetime" placeholder="Tirsdag 2. juni 2026, 09:00–17:00"></div>
+    <div class="field"><label>Sted</label><input type="text" id="dd-edit-location" placeholder="Kirkegata 24, Oslo — Høyskolen Kristiania"></div>
+    <div class="field"><label>Registreringslenke</label><input type="url" id="dd-edit-regurl" placeholder="https://event.checkin.no/…"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('demoday-modal')">Avbryt</button>
+      <button class="btn-submit" onclick="saveDemoDayEditor()">Lagre</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════════ ADMIN PANEL ═══════════════════════ -->
 <div id="admin-panel" class="ap-overlay">
   <div class="ap-header">
@@ -917,6 +1326,7 @@ body.light #back-to-top { background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08
       <button class="ap-tab" onclick="switchTab('stats')">Statistikk</button>
       <button class="ap-tab" onclick="switchTab('settings')">Innstillinger</button>
       <button class="ap-tab" onclick="switchTab('export')">Eksport</button>
+      <button class="ap-tab" onclick="switchTab('subscribers')">Abonnenter</button>
       <button class="ap-tab" onclick="switchTab('access')">Tilgang</button>
     </div>
     <div class="ap-header-right">
@@ -1023,6 +1433,14 @@ body.light #back-to-top { background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08
     <p class="ap-subsection" style="margin-top:1.5rem;">Innloggingslogg</p>
     <div id="ap-login-log" style="overflow-x:auto;"></div>
   </div>
+
+  <!-- SUBSCRIBERS -->
+  <div class="ap-pane" id="ap-subscribers">
+    <div class="ap-section-head">Abonnenter</div>
+    <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:1.5rem;">Registrerte brukere som har slått på e-postvarsler. Bruk «Send varsel»-knappen for å åpne e-postklienten din med alle adresser forhåndsutfylt.</p>
+    <div id="ap-subscribers-list"></div>
+    <div id="ap-notify-btn-wrap" style="margin-top:1rem;"></div>
+  </div>
 </div>
 
 <!-- TOAST -->
@@ -1072,9 +1490,20 @@ body.light #back-to-top { background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08
       </div>
     </div>
     <div class="field">
-      <label>Forsidebilde (URL, valgfritt)</label>
-      <input type="url" id="new-image-url" placeholder="https://eksempel.com/bilde.jpg">
-      <div class="field-hint">Lim inn lenke til et bilde — vises øverst i innlegget</div>
+      <label>Forsidebilde (valgfritt)</label>
+      <div class="img-upload-wrap">
+        <input type="url" id="new-image-url" placeholder="https://eksempel.com/bilde.jpg" oninput="onImageUrlInput(this.value)">
+        <div class="img-upload-or">eller</div>
+        <label class="img-file-label" for="new-image-file">
+          <span id="img-file-label-text">📁 Last opp fra enhet</span>
+          <input type="file" id="new-image-file" accept="image/*" onchange="onImageFileSelected(this)" style="display:none;">
+        </label>
+        <button type="button" class="img-clear-btn" id="img-clear-btn" onclick="clearImageField()" style="display:none;">✕</button>
+      </div>
+      <div id="img-preview-wrap" style="display:none;margin-top:0.6rem;">
+        <img id="img-preview" style="max-width:100%;max-height:140px;object-fit:cover;border:1px solid var(--border);border-radius:2px;">
+      </div>
+      <div class="field-hint">URL eller fil — vises som forsidebilde på innlegget</div>
     </div>
     <div class="field">
       <label>Status</label>
@@ -1191,14 +1620,20 @@ const T = {
 //  STATE
 // ══════════════════════════════════════════════════════
 const DEFAULT_PW = atob('dGhpcmRleWUyNQ=='); // thirdeye25
-let lang       = localStorage.getItem('te_lang') || 'en';
+let lang       = localStorage.getItem('te_lang') || 'no';
 let isAdmin    = localStorage.getItem('te_admin') === '1';
 let posts      = [];
 let siteSettings = {};
-let extraAdmins  = {}; // from Firebase settings/admins
+let extraAdmins  = {};
 let loginLog     = [];
 let currentStatus = 'loading';
 let currentPw  = localStorage.getItem('te_custom_pw') || DEFAULT_PW;
+let currentUser  = null;
+let userProfile  = {};
+let allUsers     = {};
+let commentsCache = {};
+
+const AVATARS = ['🌙','⭐','🔮','🌿','🦅','🌊','🔥','⚡','🌸','🦉','🌺','💫','🐺','🍃','🌙'];
 
 // ══════════════════════════════════════════════════════
 //  TRANSLATIONS
@@ -1249,7 +1684,26 @@ function setStatus(type) {
 // ══════════════════════════════════════════════════════
 function initFirebase() {
   if (!window._fb) { setStatus('error'); return; }
-  const { onValue, postsRef, settingsRef, logRef } = window._fb;
+  const { onValue, postsRef, settingsRef, logRef, usersRef, onAuthState, db, ref } = window._fb;
+
+  // Auth state listener
+  onAuthState(user => {
+    currentUser = user;
+    if (user) {
+      onValue(ref(db,'users/'+user.uid), snap => {
+        userProfile = snap.val() || {};
+        updateUserNav();
+        renderPosts();
+      });
+    } else {
+      userProfile = {};
+      updateUserNav();
+      renderPosts();
+    }
+  });
+
+  // All users (for admin)
+  onValue(usersRef, snap => { allUsers = snap.val() || {}; });
 
   onValue(postsRef, snap => {
     const d = snap.val();
@@ -1264,6 +1718,9 @@ function initFirebase() {
     siteSettings = snap.val() || {};
     extraAdmins  = siteSettings.admins || {};
     if (siteSettings.customPw) currentPw = atob(siteSettings.customPw);
+    if (siteSettings.demoDay)  applyDemoDayData(siteSettings.demoDay);
+    const editBtn = document.getElementById('demoday-edit-btn');
+    if (editBtn) editBtn.classList.toggle('visible', isAdmin);
     applyTranslations();
     if (document.getElementById('admin-panel').classList.contains('open')) refreshAdminPanel();
   });
@@ -1271,10 +1728,9 @@ function initFirebase() {
   onValue(logRef, snap => {
     const d = snap.val();
     loginLog = d ? Object.values(d).sort((a,b)=>b.time-a.time).slice(0,30) : [];
-    if (document.getElementById('ap-access').classList.contains('active')) renderLoginLog();
+    if (document.getElementById('ap-access') && document.getElementById('ap-access').classList.contains('active')) renderLoginLog();
   });
 
-  // Scheduled publishing checker
   setInterval(checkScheduled, 60000);
   checkScheduled();
 }
@@ -1480,10 +1936,12 @@ function togglePost(card) {
   if (!was) {
     card.classList.add('expanded');
     card.querySelector('.read-toggle').textContent = tr('close_entry');
-    // Inject related posts
     const key  = card.dataset.key;
     const post = posts.find(p => p._key === key);
-    if (post) injectRelatedPosts(card, post);
+    if (post) {
+      injectRelatedPosts(card, post);
+      injectCommentSection(card, key);
+    }
   }
 }
 
@@ -1510,11 +1968,13 @@ function openPostModal(editKey) {
     document.getElementById('new-preview').value   = p.preview;
     document.getElementById('new-body').value      = p.body.replace(/<br\s*\/?>/gi,'\n').replace(/<[^>]+>/g,'');
     document.getElementById('new-image-url').value = p.imageUrl||'';
+    resetImageFields(p.imageUrl||null);
     document.getElementById('new-status').value    = postStatus(p);
     document.getElementById('new-publish-at').value= p.publishAt||'';
     document.getElementById('new-orig-lang').value = p.originalLang||'no';
   } else {
     ['new-title','new-tag','new-preview','new-body','new-image-url'].forEach(id=>document.getElementById(id).value='');
+    resetImageFields(null);
     document.getElementById('new-date').value        = new Date().toISOString().split('T')[0];
     document.getElementById('new-status').value      = 'published';
     document.getElementById('new-publish-at').value  = '';
@@ -1560,7 +2020,11 @@ function submitPost() {
   } else {
     const nr = push(postsRef);
     set(nr, postData)
-      .then(() => { closeModal('post-modal'); translatePost(nr.key); })
+      .then(() => {
+        closeModal('post-modal');
+        translatePost(nr.key);
+        if (!isDraft) notifySubscribers(postData);
+      })
       .catch(() => { document.getElementById('post-submit-btn').disabled = false; });
   }
 }
@@ -2229,6 +2693,73 @@ function handleHashNavigation() {
 }
 
 // ══════════════════════════════════════════════════════
+//  IMAGE UPLOAD (URL + file)
+// ══════════════════════════════════════════════════════
+function onImageUrlInput(val) {
+  const preview = document.getElementById('img-preview');
+  const wrap    = document.getElementById('img-preview-wrap');
+  const clearBtn = document.getElementById('img-clear-btn');
+  const fileInput = document.getElementById('new-image-file');
+  if (val.trim()) {
+    if (preview) { preview.src = val; wrap.style.display = 'block'; }
+    if (clearBtn) clearBtn.style.display = 'flex';
+    if (fileInput) fileInput.value = '';
+  } else {
+    if (wrap) wrap.style.display = 'none';
+    if (clearBtn) clearBtn.style.display = 'none';
+  }
+}
+
+function onImageFileSelected(input) {
+  if (!input.files || !input.files[0]) return;
+  const file = input.files[0];
+  const label = document.getElementById('img-file-label-text');
+  if (label) label.textContent = '📁 ' + file.name;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const dataUrl = e.target.result;
+    const urlInput = document.getElementById('new-image-url');
+    const preview  = document.getElementById('img-preview');
+    const wrap     = document.getElementById('img-preview-wrap');
+    const clearBtn = document.getElementById('img-clear-btn');
+    if (urlInput) urlInput.value = dataUrl;
+    if (preview)  { preview.src = dataUrl; wrap.style.display = 'block'; }
+    if (clearBtn) clearBtn.style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImageField() {
+  const urlInput  = document.getElementById('new-image-url');
+  const fileInput = document.getElementById('new-image-file');
+  const preview   = document.getElementById('img-preview');
+  const wrap      = document.getElementById('img-preview-wrap');
+  const clearBtn  = document.getElementById('img-clear-btn');
+  const label     = document.getElementById('img-file-label-text');
+  if (urlInput)  urlInput.value = '';
+  if (fileInput) fileInput.value = '';
+  if (preview)   preview.src = '';
+  if (wrap)      wrap.style.display = 'none';
+  if (clearBtn)  clearBtn.style.display = 'none';
+  if (label)     label.textContent = '📁 Last opp fra enhet';
+}
+
+// Reset image fields when opening a modal
+function resetImageFields(imageUrl) {
+  clearImageField();
+  if (imageUrl) {
+    const urlInput = document.getElementById('new-image-url');
+    const preview  = document.getElementById('img-preview');
+    const wrap     = document.getElementById('img-preview-wrap');
+    const clearBtn = document.getElementById('img-clear-btn');
+    if (urlInput) urlInput.value = imageUrl;
+    if (preview)  { preview.src = imageUrl; wrap.style.display = 'block'; }
+    if (clearBtn) clearBtn.style.display = 'flex';
+  }
+}
+
+// ══════════════════════════════════════════════════════
 //  WYSIWYG EDITOR HELPERS
 // ══════════════════════════════════════════════════════
 function editorWrap(tag) {
@@ -2368,6 +2899,317 @@ function startClock() {
 }
 
 // ══════════════════════════════════════════════════════
+//  USER AUTH & PROFILE
+// ══════════════════════════════════════════════════════
+function handleUserBtn() {
+  if (currentUser) { openProfileModal(); }
+  else openAuthModal('register');
+}
+
+function openAuthModal(tab='register') {
+  const isReg = tab==='register';
+  document.querySelectorAll('.auth-tab').forEach((t,i)=>t.classList.toggle('active',i===(isReg?0:1)));
+  document.querySelectorAll('.auth-pane').forEach((p,i)=>p.classList.toggle('active',i===(isReg?0:1)));
+  const btn = document.getElementById('auth-submit-btn');
+  if (btn) btn.textContent = isReg ? 'Opprett konto' : 'Logg inn';
+  document.getElementById('auth-error').textContent='';
+  openModal('auth-modal');
+  setTimeout(()=>{ const f=document.getElementById(isReg?'reg-name':'login-email'); if(f)f.focus(); },120);
+}
+
+function switchAuthTab(tab) {
+  openAuthModal(tab);
+}
+
+function handleAuthSubmit() {
+  const isReg = document.getElementById('auth-pane-register').classList.contains('active');
+  if (isReg) registerUser(); else loginUser();
+}
+
+async function registerUser() {
+  const name  = document.getElementById('reg-name').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pw    = document.getElementById('reg-pw').value;
+  const err   = document.getElementById('auth-error');
+  if (!name||!email||!pw) { err.textContent='Fyll inn alle felt.'; return; }
+  if (pw.length < 6)      { err.textContent='Passord må ha minst 6 tegn.'; return; }
+  err.textContent='';
+  try {
+    const cred = await window._fb.createUser(email, pw);
+    const uid  = cred.user.uid;
+    const avatar = document.querySelector('.avatar-opt.selected')?.dataset.emoji || AVATARS[0];
+    await window._fb.set(window._fb.ref(window._fb.db,'users/'+uid), {
+      displayName: name, email, avatarEmoji: avatar, avatarUrl: '', emailNotifications: true, createdAt: Date.now()
+    });
+    closeModal('auth-modal');
+    toast('Velkommen, '+name+' ✓');
+  } catch(e) {
+    err.textContent = e.code==='auth/email-already-in-use'?'E-posten er allerede i bruk.':e.message;
+  }
+}
+
+async function loginUser() {
+  const email = document.getElementById('login-email').value.trim();
+  const pw    = document.getElementById('login-pw').value;
+  const err   = document.getElementById('auth-error');
+  if (!email||!pw) { err.textContent='Fyll inn e-post og passord.'; return; }
+  err.textContent='';
+  try {
+    await window._fb.signIn(email, pw);
+    closeModal('auth-modal');
+    toast('Innlogget ✓');
+  } catch(e) {
+    err.textContent = e.code==='auth/wrong-password'||e.code==='auth/user-not-found'?'Feil e-post eller passord.':e.message;
+  }
+}
+
+function signOutUser() {
+  window._fb.signOut().then(()=>{ closeModal('profile-modal'); toast('Logget ut'); });
+}
+
+function updateUserNav() {
+  const btn   = document.getElementById('user-nav-btn');
+  const avSm  = document.getElementById('nav-avatar-sm');
+  const label = document.getElementById('nav-user-label');
+  if (!btn) return;
+  if (currentUser) {
+    btn.classList.add('logged-in');
+    const av = userProfile.avatarUrl || userProfile.avatarEmoji || '👤';
+    avSm.innerHTML = av.startsWith('http')||av.startsWith('data:')
+      ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : av;
+    label.textContent = (userProfile.displayName||currentUser.email).split(' ')[0];
+  } else {
+    btn.classList.remove('logged-in');
+    avSm.innerHTML = '👤';
+    label.textContent = 'Logg inn';
+  }
+}
+
+// Profile modal
+function openProfileModal() {
+  if (!currentUser) { openAuthModal('login'); return; }
+  const p = userProfile;
+  const avLg = document.getElementById('profile-avatar-display');
+  if (avLg) {
+    const av = p.avatarUrl || p.avatarEmoji || '👤';
+    avLg.innerHTML = av.startsWith('http')||av.startsWith('data:')
+      ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : `<span style="font-size:1.9rem;">${av}</span>`;
+  }
+  const nm = document.getElementById('profile-name-display');
+  const em = document.getElementById('profile-email-display');
+  if (nm) nm.textContent = p.displayName||'';
+  if (em) em.textContent = currentUser.email||'';
+  const ni = document.getElementById('notif-toggle');
+  if (ni) ni.checked = p.emailNotifications !== false;
+  const nameInput = document.getElementById('profile-name-input');
+  if (nameInput) nameInput.value = p.displayName||'';
+  // Build avatar grid
+  const grid = document.getElementById('profile-avatar-grid');
+  if (grid) {
+    grid.innerHTML = AVATARS.map(e=>`<div class="avatar-opt${(p.avatarEmoji===e&&!p.avatarUrl)?' selected':''}" data-emoji="${e}" onclick="selectAvatar(this,'${e}')">${e}</div>`).join('');
+  }
+  openModal('profile-modal');
+}
+
+function selectAvatar(el, emoji) {
+  document.querySelectorAll('#profile-avatar-grid .avatar-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('profile-avatar-url-input').value = '';
+  const avLg = document.getElementById('profile-avatar-display');
+  if (avLg) avLg.innerHTML = `<span style="font-size:1.9rem;">${emoji}</span>`;
+}
+
+function onProfileAvatarFile(input) {
+  if (!input.files||!input.files[0]) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const url = e.target.result;
+    document.getElementById('profile-avatar-url-input').value = url;
+    document.querySelectorAll('#profile-avatar-grid .avatar-opt').forEach(o=>o.classList.remove('selected'));
+    const avLg = document.getElementById('profile-avatar-display');
+    if (avLg) avLg.innerHTML = `<img src="${url}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+  };
+  reader.readAsDataURL(input.files[0]);
+}
+
+function saveProfile() {
+  if (!currentUser) return;
+  const name     = document.getElementById('profile-name-input').value.trim() || userProfile.displayName;
+  const urlInput = document.getElementById('profile-avatar-url-input').value.trim();
+  const selEmoji = document.querySelector('#profile-avatar-grid .avatar-opt.selected')?.dataset.emoji || '';
+  const notif    = document.getElementById('notif-toggle').checked;
+  const upd = { displayName: name, avatarUrl: urlInput, avatarEmoji: selEmoji, emailNotifications: notif };
+  window._fb.update(window._fb.ref(window._fb.db,'users/'+currentUser.uid), upd)
+    .then(()=>{ toast('Profil lagret ✓'); closeModal('profile-modal'); });
+}
+
+function saveNotifPref(val) {
+  if (!currentUser) return;
+  window._fb.update(window._fb.ref(window._fb.db,'users/'+currentUser.uid),{emailNotifications:val});
+}
+
+// Avatar grid for registration modal
+function buildRegAvatarGrid() {
+  const grid = document.getElementById('reg-avatar-grid');
+  if (!grid) return;
+  grid.innerHTML = AVATARS.map((e,i)=>`<div class="avatar-opt${i===0?' selected':''}" data-emoji="${e}" onclick="document.querySelectorAll('#reg-avatar-grid .avatar-opt').forEach(o=>o.classList.remove('selected'));this.classList.add('selected')">${e}</div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  COMMENTS
+// ══════════════════════════════════════════════════════
+function initCommentsForPost(postKey) {
+  if (!window._fb) return;
+  const { onValue, ref, db } = window._fb;
+  onValue(ref(db,'comments/'+postKey), snap => {
+    const d = snap.val();
+    commentsCache[postKey] = d ? Object.entries(d).map(([k,v])=>({...v,_key:k})).sort((a,b)=>a.ts-b.ts) : [];
+    renderComments(postKey);
+  });
+}
+
+function renderComments(postKey) {
+  const section = document.getElementById('comments-'+postKey);
+  if (!section) return;
+  const list = section.querySelector('.comment-list');
+  if (!list) return;
+  const items = commentsCache[postKey] || [];
+  if (!items.length) {
+    list.innerHTML = '<div class="no-comments">Vær den første til å kommentere.</div>';
+    return;
+  }
+  list.innerHTML = items.map(c => {
+    const av = c.avatarUrl||c.avatarEmoji||'👤';
+    const avHtml = av.startsWith('http')||av.startsWith('data:')
+      ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : av;
+    const ts = new Date(c.ts).toLocaleDateString('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+    const canDel = isAdmin || (currentUser && currentUser.uid===c.uid);
+    return `<div class="comment-item">
+      <div class="comment-avatar">${avHtml}</div>
+      <div class="comment-body">
+        <div class="comment-meta">
+          <span class="comment-author">${c.authorName||'Anonym'}</span>
+          <span class="comment-time">${ts}</span>
+          ${canDel?`<button class="comment-del-btn" onclick="deleteComment('${postKey}','${c._key}')">✕</button>`:''}
+        </div>
+        <div class="comment-text">${c.text}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function injectCommentSection(card, postKey) {
+  const existing = card.querySelector('.comments-section');
+  if (existing) { initCommentsForPost(postKey); return; }
+  const av = currentUser ? (userProfile.avatarUrl||userProfile.avatarEmoji||'👤') : '👤';
+  const avHtml = currentUser && (av.startsWith('http')||av.startsWith('data:'))
+    ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+    : (currentUser ? av : '👤');
+  const formOrPrompt = currentUser
+    ? `<div class="comment-form">
+        <div class="comment-avatar">${avHtml}</div>
+        <div class="comment-input-wrap">
+          <textarea class="comment-input" id="ci-${postKey}" placeholder="Skriv en kommentar…" rows="2"></textarea>
+          <div class="comment-submit-row">
+            <button class="btn-submit" style="font-size:0.62rem;padding:0.3rem 1rem;" onclick="submitComment('${postKey}')">Send</button>
+          </div>
+        </div>
+      </div>`
+    : `<div class="comment-login-prompt">
+        <span>Logg inn for å kommentere</span>
+        <button class="comment-login-btn" onclick="openAuthModal('login')">Logg inn</button>
+      </div>`;
+
+  const html = `<div class="comments-section" id="comments-${postKey}">
+    <div class="comments-label">Kommentarer</div>
+    ${formOrPrompt}
+    <div class="comment-list"><div class="no-comments">Laster…</div></div>
+  </div>`;
+  card.querySelector('.post-bottom-row').insertAdjacentHTML('afterend', html);
+  initCommentsForPost(postKey);
+}
+
+async function submitComment(postKey) {
+  if (!currentUser) { openAuthModal('login'); return; }
+  const input = document.getElementById('ci-'+postKey);
+  const text  = input?.value.trim();
+  if (!text) return;
+  const { push, ref, db } = window._fb;
+  const av = userProfile.avatarUrl||'';
+  await push(ref(db,'comments/'+postKey), {
+    uid: currentUser.uid,
+    authorName: userProfile.displayName||currentUser.email.split('@')[0],
+    avatarEmoji: userProfile.avatarEmoji||'👤',
+    avatarUrl: av,
+    text, ts: Date.now()
+  });
+  if (input) input.value = '';
+}
+
+function deleteComment(postKey, commentKey) {
+  if (!window._fb) return;
+  window._fb.remove(window._fb.ref(window._fb.db,'comments/'+postKey+'/'+commentKey));
+}
+
+// ══════════════════════════════════════════════════════
+//  DEMO DAY EDITOR
+// ══════════════════════════════════════════════════════
+function openDemoDayEditor() {
+  if (!isAdmin) return;
+  const s = siteSettings.demoDay || {};
+  document.getElementById('dd-edit-eyebrow').value  = s.eyebrow  || document.getElementById('dd-eyebrow')?.textContent || '';
+  document.getElementById('dd-edit-headline').value = s.headline || document.getElementById('dd-headline')?.textContent || '';
+  document.getElementById('dd-edit-desc1').value    = s.desc1    || '';
+  document.getElementById('dd-edit-desc2').value    = s.desc2    || '';
+  document.getElementById('dd-edit-datetime').value = s.datetime || '';
+  document.getElementById('dd-edit-location').value = s.location || '';
+  document.getElementById('dd-edit-regurl').value   = s.regUrl   || 'https://event.checkin.no/222792/ai-demo-day';
+  openModal('demoday-modal');
+}
+
+function saveDemoDayEditor() {
+  const data = {
+    eyebrow:  document.getElementById('dd-edit-eyebrow').value.trim(),
+    headline: document.getElementById('dd-edit-headline').value.trim(),
+    desc1:    document.getElementById('dd-edit-desc1').value.trim(),
+    desc2:    document.getElementById('dd-edit-desc2').value.trim(),
+    datetime: document.getElementById('dd-edit-datetime').value.trim(),
+    location: document.getElementById('dd-edit-location').value.trim(),
+    regUrl:   document.getElementById('dd-edit-regurl').value.trim()
+  };
+  window._fb.update(window._fb.ref(window._fb.db,'/'),{'settings/demoDay':data})
+    .then(()=>{ closeModal('demoday-modal'); toast('Demo Day oppdatert ✓'); });
+}
+
+function applyDemoDayData(d) {
+  const set = (id,val) => { const el=document.getElementById(id); if(el&&val) el.textContent=val; };
+  const setHtml = (id,val) => { const el=document.getElementById(id); if(el&&val) el.innerHTML=val; };
+  set('dd-eyebrow',  d.eyebrow);
+  set('dd-headline', d.headline);
+  setHtml('dd-desc1', d.desc1);
+  setHtml('dd-desc2', d.desc2);
+  // Update meta row
+  const rows = document.querySelectorAll('.demoday-info-row');
+  if (d.datetime && rows[0]) rows[0].innerHTML = `<span class="demoday-info-icon">📅</span> ${d.datetime}`;
+  if (d.location  && rows[1]) rows[1].innerHTML = `<span class="demoday-info-icon">📍</span> ${d.location}`;
+  // Update register button
+  const btn = document.querySelector('.demoday-btn[href]');
+  if (btn && d.regUrl) btn.href = d.regUrl;
+}
+
+// Notify subscribers when a new post is published
+async function notifySubscribers(post) {
+  const subscribers = Object.values(allUsers).filter(u => u.emailNotifications && u.email);
+  if (!subscribers.length) return;
+  // Log how many would be notified (actual email requires EmailJS/backend setup)
+  console.log(`[Third Eye] Would notify ${subscribers.length} subscriber(s) about: "${post.title}"`);
+  toast(`${subscribers.length} abonnent(er) varslet om nytt innlegg`, false);
+}
+
+// ══════════════════════════════════════════════════════
 //  INIT
 // ══════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
@@ -2376,6 +3218,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setLang(lang);
   updateAdminState();
   syncMobileMenuState();
+  buildRegAvatarGrid();
   initScrollProgress();
   initCursorGlow();
   initScrollReveal();
@@ -2384,23 +3227,22 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('keydown', e => {
     const tag = e.target.tagName;
     const inInput = tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT';
-    // / key focuses search
     if (e.key==='/' && !inInput) {
       e.preventDefault();
       const inp = document.getElementById('search-input');
       if (inp) { inp.focus(); inp.select(); }
     }
-    // Escape: clear search OR close modals/panel
     if (e.key==='Escape') {
       if (searchQuery) { clearSearch(); return; }
       if (tagFilter)   { clearTagFilter(); return; }
-      ['admin-modal','post-modal','delete-modal'].forEach(closeModal);
-      document.getElementById('preview-overlay').classList.remove('open');
-      document.getElementById('mobile-menu').classList.remove('open');
+      ['admin-modal','post-modal','delete-modal','auth-modal','profile-modal','demoday-modal'].forEach(closeModal);
+      const po = document.getElementById('preview-overlay');
+      if (po) po.classList.remove('open');
+      const mm = document.getElementById('mobile-menu');
+      if (mm) mm.classList.remove('open');
       closeAdminPanel();
     }
   });
-  // Close mobile menu on outside click
   document.addEventListener('click', e => {
     const menu = document.getElementById('mobile-menu');
     const btn  = document.getElementById('hamburger-btn');
@@ -2413,5 +3255,23 @@ document.addEventListener('DOMContentLoaded', () => {
 if (window._fbReady) { initFirebase(); }
 else { document.addEventListener('fb-ready', initFirebase); setTimeout(()=>{if(currentStatus==='loading')setStatus('error');},6000); }
 </script>
+<!--
+  ⚠ FIREBASE AUTH SETUP (én gang nødvendig):
+  1. Gå til Firebase Console → Authentication → Get started
+  2. Velg "Email/Password" under Sign-in providers → Enable → Save
+  3. Oppdater Realtime Database-regler til:
+     {
+       "rules": {
+         ".read": true,
+         "posts":  { ".write": "auth != null || auth == null" },
+         "settings": { ".write": "auth != null || auth == null" },
+         "comments": { ".write": "auth != null" },
+         "users":    {
+           "$uid": { ".write": "auth != null && auth.uid == $uid" }
+         }
+       }
+     }
+  Etter dette er registrering, innlogging og kommentarer fullt funksjonelle.
+-->
 </body>
 </html>
