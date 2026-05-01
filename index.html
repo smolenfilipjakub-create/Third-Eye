@@ -549,7 +549,48 @@ button, .btn-add, .btn-submit, .btn-cancel,
 .ap-log-table td { font-family:'EB Garamond',serif; font-size:0.9rem; color:var(--text); padding:0.5rem 0.75rem; border-bottom:1px solid rgba(201,168,76,0.06); }
 .ap-log-table tr:last-child td { border-bottom:none; }
 
-/* Toast */
+/* ══ COMMENT LIKES/DISLIKES ══ */
+.comment-reactions { display:flex; align-items:center; gap:0.5rem; margin-top:0.5rem; padding-top:0.4rem; border-top:1px solid rgba(201,168,76,0.08); }
+.reaction-btn { display:flex; align-items:center; gap:0.25rem; background:none; border:1px solid transparent; color:var(--text-muted); font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.08em; padding:0.18rem 0.55rem; border-radius:2px; cursor:pointer; transition:all 0.2s; user-select:none; }
+.reaction-btn:hover { border-color:var(--border); color:var(--text); }
+.reaction-btn.liked    { background:rgba(201,168,76,0.12); border-color:var(--gold-dim); color:var(--gold); }
+.reaction-btn.disliked { background:var(--red-bg); border-color:var(--red-border); color:var(--red-fg); }
+.reaction-btn:disabled { opacity:0.4; cursor:default; }
+.reaction-count { font-size:0.65rem; min-width:10px; text-align:center; }
+
+/* ══ BANNED COMMENT ══ */
+.comment-item.banned { opacity:0.35; filter:blur(2px); position:relative; }
+.comment-item.banned::after { content:'Skjult av admin'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-size:0.6rem; letter-spacing:0.15em; color:var(--text-muted); cursor:default; }
+.comment-item.banned-admin { opacity:1; filter:none; border:1px solid var(--red-border); border-radius:2px; }
+.banned-badge { font-family:'Cinzel',serif; font-size:0.52rem; letter-spacing:0.1em; color:var(--red-fg); background:var(--red-bg); border:1px solid var(--red-border); padding:0.1rem 0.4rem; border-radius:1px; margin-left:0.3rem; }
+
+/* ══ MODERATION TAB ══ */
+.mod-comment-row { background:var(--ink2); border:1px solid var(--border); border-radius:2px; padding:0.85rem 1rem; margin-bottom:0.6rem; transition:border-color 0.2s; }
+.mod-comment-row:hover { border-color:rgba(201,168,76,0.25); }
+.mod-comment-row.is-banned { border-color:var(--red-border); background:var(--red-bg); }
+.mod-comment-meta { display:flex; align-items:center; gap:0.6rem; margin-bottom:0.35rem; flex-wrap:wrap; }
+.mod-comment-author { font-family:'Cinzel',serif; font-size:0.62rem; letter-spacing:0.1em; color:var(--gold-dim); }
+.mod-comment-post   { font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.08em; color:var(--text-muted); }
+.mod-comment-time   { font-family:'Cinzel',serif; font-size:0.52rem; letter-spacing:0.06em; color:var(--text-muted); margin-left:auto; }
+.mod-comment-text   { color:var(--text); font-size:0.9rem; line-height:1.55; margin-bottom:0.5rem; }
+.mod-comment-actions { display:flex; gap:0.4rem; }
+.mod-empty { font-family:'Cinzel',serif; font-size:0.65rem; letter-spacing:0.15em; color:var(--text-muted); text-align:center; padding:2rem; }
+
+/* ══ USERS TAB ══ */
+.user-row { display:flex; align-items:center; gap:0.85rem; background:var(--ink2); border:1px solid var(--border); border-radius:2px; padding:0.8rem 1rem; margin-bottom:0.5rem; transition:border-color 0.2s; }
+.user-row.is-banned { border-color:var(--red-border); background:var(--red-bg); }
+.user-row-avatar { width:34px; height:34px; border-radius:50%; background:rgba(90,63,160,0.2); display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; overflow:hidden; }
+.user-row-avatar img { width:100%; height:100%; object-fit:cover; }
+.user-row-info { flex:1; min-width:0; }
+.user-row-name  { font-family:'Cinzel',serif; font-size:0.78rem; color:var(--text); }
+.user-row-email { font-family:'Cinzel',serif; font-size:0.58rem; letter-spacing:0.06em; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.user-row-meta  { font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.06em; color:var(--text-muted); margin-top:0.1rem; }
+.user-row-badge { font-family:'Cinzel',serif; font-size:0.55rem; letter-spacing:0.1em; padding:0.1rem 0.45rem; border-radius:1px; flex-shrink:0; }
+.user-row-badge.active  { background:var(--green-bg); color:var(--green-fg); border:1px solid var(--green-border); }
+.user-row-badge.banned  { background:var(--red-bg); color:var(--red-fg); border:1px solid var(--red-border); }
+.user-row-actions { display:flex; gap:0.35rem; flex-shrink:0; }
+
+/* ══ TOAST ══ */
 .ap-toast { position:fixed; bottom:2rem; right:2rem; z-index:600; background:var(--ink2); border:1px solid var(--green-border); color:var(--green-fg); font-family:'Cinzel',serif; font-size:0.68rem; letter-spacing:0.12em; padding:0.75rem 1.25rem; border-radius:2px; transform:translateY(80px); opacity:0; transition:transform 0.3s,opacity 0.3s; pointer-events:none; }
 .ap-toast.show { transform:translateY(0); opacity:1; }
 .ap-toast.err { border-color:var(--red-border); color:var(--red-fg); }
@@ -1326,6 +1367,8 @@ body.light #back-to-top { background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08
       <button class="ap-tab" onclick="switchTab('stats')">Statistikk</button>
       <button class="ap-tab" onclick="switchTab('settings')">Innstillinger</button>
       <button class="ap-tab" onclick="switchTab('export')">Eksport</button>
+      <button class="ap-tab" onclick="switchTab('moderation')">Kommentarer</button>
+      <button class="ap-tab" onclick="switchTab('users')">Brukere</button>
       <button class="ap-tab" onclick="switchTab('subscribers')">Abonnenter</button>
       <button class="ap-tab" onclick="switchTab('access')">Tilgang</button>
     </div>
@@ -1432,6 +1475,37 @@ body.light #back-to-top { background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08
     <div class="error-msg" id="admin-add-error"></div>
     <p class="ap-subsection" style="margin-top:1.5rem;">Innloggingslogg</p>
     <div id="ap-login-log" style="overflow-x:auto;"></div>
+  </div>
+
+  <!-- MODERATION -->
+  <div class="ap-pane" id="ap-moderation">
+    <div class="ap-section-head">
+      Kommentarmoderering
+      <span id="mod-comment-count" style="font-size:0.7rem;color:var(--text-muted);font-family:'EB Garamond',serif;"></span>
+    </div>
+    <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:1.5rem;">Alle kommentarer fra alle innlegg. Skjul eller slett enkeltkommentarer.</p>
+    <div class="ap-inline-form" style="margin-bottom:1.25rem;gap:0.5rem;">
+      <input class="ap-inline-input" id="mod-search" placeholder="Søk i kommentarer…" oninput="renderModerationTab()" style="flex:1;">
+      <select class="ap-inline-input" id="mod-filter" onchange="renderModerationTab()" style="flex:0 0 auto;min-width:120px;">
+        <option value="all">Alle</option>
+        <option value="visible">Synlige</option>
+        <option value="hidden">Skjulte</option>
+      </select>
+    </div>
+    <div id="ap-moderation-list"></div>
+  </div>
+
+  <!-- USERS -->
+  <div class="ap-pane" id="ap-users">
+    <div class="ap-section-head">
+      Brukere
+      <span id="users-count" style="font-size:0.7rem;color:var(--text-muted);font-family:'EB Garamond',serif;"></span>
+    </div>
+    <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:1.5rem;">Alle registrerte brukere. Bann en bruker for å skjule alle deres kommentarer.</p>
+    <div class="ap-inline-form" style="margin-bottom:1.25rem;">
+      <input class="ap-inline-input" id="users-search" placeholder="Søk på navn eller e-post…" oninput="renderUsersTab()" style="flex:1;">
+    </div>
+    <div id="ap-users-list"></div>
   </div>
 
   <!-- SUBSCRIBERS -->
@@ -1733,6 +1807,7 @@ function initFirebase() {
 
   setInterval(checkScheduled, 60000);
   checkScheduled();
+  initAllCommentsListener();
 }
 
 function checkScheduled() {
@@ -2061,16 +2136,17 @@ function closeAdminPanel() {
 }
 
 function switchTab(tab) {
-  document.querySelectorAll('.ap-tab').forEach((b,i) => {
-    const tabs = ['entries','stats','settings','export','access'];
-    b.classList.toggle('active', tabs[i]===tab);
-  });
+  const tabs = ['entries','stats','settings','export','moderation','users','subscribers','access'];
+  document.querySelectorAll('.ap-tab').forEach((b,i) => b.classList.toggle('active', tabs[i]===tab));
   document.querySelectorAll('.ap-pane').forEach(p => p.classList.remove('active'));
-  document.getElementById('ap-'+tab).classList.add('active');
-  if (tab==='entries')  renderEntriesTab();
-  if (tab==='stats')    renderStatsTab();
-  if (tab==='settings') renderSettingsTab();
-  if (tab==='access')   renderAccessTab();
+  const pane = document.getElementById('ap-'+tab);
+  if (pane) pane.classList.add('active');
+  if (tab==='entries')    renderEntriesTab();
+  if (tab==='stats')      renderStatsTab();
+  if (tab==='settings')   renderSettingsTab();
+  if (tab==='moderation') renderModerationTab();
+  if (tab==='users')      renderUsersTab();
+  if (tab==='access')     renderAccessTab();
 }
 
 function refreshAdminPanel() {
@@ -3080,22 +3156,53 @@ function renderComments(postKey) {
     list.innerHTML = '<div class="no-comments">Vær den første til å kommentere.</div>';
     return;
   }
+  const uid = currentUser?.uid || null;
+  const bannedUsers = Object.entries(allUsers).filter(([,u])=>u.banned).map(([id])=>id);
+
   list.innerHTML = items.map(c => {
+    const isBannedUser = bannedUsers.includes(c.uid);
+    const isHidden = c.hidden || isBannedUser;
+    // Non-admins see hidden comments blurred; admins see them with a banner
+    if (isHidden && !isAdmin) {
+      return `<div class="comment-item" style="opacity:0.25;font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.12em;color:var(--text-muted);text-align:center;padding:0.5rem;">Skjult av admin</div>`;
+    }
     const av = c.avatarUrl||c.avatarEmoji||'👤';
     const avHtml = av.startsWith('http')||av.startsWith('data:')
       ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
       : av;
     const ts = new Date(c.ts).toLocaleDateString('nb-NO',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
-    const canDel = isAdmin || (currentUser && currentUser.uid===c.uid);
-    return `<div class="comment-item">
+    const canDel = isAdmin || (uid && uid===c.uid);
+    const likes    = c.likes    ? Object.keys(c.likes).length    : 0;
+    const dislikes = c.dislikes ? Object.keys(c.dislikes).length : 0;
+    const hasLiked    = uid && c.likes    && c.likes[uid];
+    const hasDisliked = uid && c.dislikes && c.dislikes[uid];
+    const likeDisabled    = !uid || hasLiked    ? 'disabled' : '';
+    const dislikeDisabled = !uid || hasDisliked ? 'disabled' : '';
+    const hiddenBadge = isHidden && isAdmin ? `<span class="banned-badge">Skjult</span>` : '';
+    const hideBtn = isAdmin
+      ? `<button class="ap-action-btn" style="font-size:0.55rem;padding:0.15rem 0.5rem;" onclick="toggleHideComment('${postKey}','${c._key}',${!c.hidden})">${c.hidden||isBannedUser?'Vis':'Skjul'}</button>`
+      : '';
+
+    return `<div class="comment-item${isHidden&&isAdmin?' banned-admin':''}">
       <div class="comment-avatar">${avHtml}</div>
       <div class="comment-body">
         <div class="comment-meta">
-          <span class="comment-author">${c.authorName||'Anonym'}</span>
+          <span class="comment-author">${c.authorName||'Anonym'}${hiddenBadge}</span>
           <span class="comment-time">${ts}</span>
+          ${hideBtn}
           ${canDel?`<button class="comment-del-btn" onclick="deleteComment('${postKey}','${c._key}')">✕</button>`:''}
         </div>
         <div class="comment-text">${c.text}</div>
+        <div class="comment-reactions">
+          <button class="reaction-btn${hasLiked?' liked':''}" ${likeDisabled}
+            onclick="reactComment('${postKey}','${c._key}','likes')" title="${uid?'Lik':'Logg inn for å reagere'}">
+            👍 <span class="reaction-count">${likes||''}</span>
+          </button>
+          <button class="reaction-btn${hasDisliked?' disliked':''}" ${dislikeDisabled}
+            onclick="reactComment('${postKey}','${c._key}','dislikes')" title="${uid?'Ikke likt':'Logg inn for å reagere'}">
+            👎 <span class="reaction-count">${dislikes||''}</span>
+          </button>
+        </div>
       </div>
     </div>`;
   }).join('');
@@ -3152,6 +3259,155 @@ async function submitComment(postKey) {
 function deleteComment(postKey, commentKey) {
   if (!window._fb) return;
   window._fb.remove(window._fb.ref(window._fb.db,'comments/'+postKey+'/'+commentKey));
+}
+
+// ══════════════════════════════════════════════════════
+//  COMMENT REACTIONS (like / dislike)
+// ══════════════════════════════════════════════════════
+function reactComment(postKey, commentKey, type) {
+  if (!currentUser) { openAuthModal('login'); return; }
+  const uid = currentUser.uid;
+  const { ref, db, update, remove } = window._fb;
+  const path = `comments/${postKey}/${commentKey}/${type}/${uid}`;
+  // Find current state
+  const c = (commentsCache[postKey]||[]).find(x=>x._key===commentKey);
+  if (!c) return;
+  const already = c[type] && c[type][uid];
+  if (already) {
+    remove(ref(db, path));
+  } else {
+    // Remove opposite reaction first
+    const opp = type==='likes'?'dislikes':'likes';
+    if (c[opp] && c[opp][uid]) remove(ref(db,`comments/${postKey}/${commentKey}/${opp}/${uid}`));
+    update(ref(db,'/'),{[path]:true});
+  }
+}
+
+// ══════════════════════════════════════════════════════
+//  COMMENT MODERATION (admin hide/show)
+// ══════════════════════════════════════════════════════
+function toggleHideComment(postKey, commentKey, hide) {
+  const { ref, db, update } = window._fb;
+  update(ref(db,'/'),{[`comments/${postKey}/${commentKey}/hidden`]: hide})
+    .then(()=>toast(hide?'Kommentar skjult':'Kommentar vist igjen'));
+}
+
+// ── All comments flattened across all posts (for admin tab) ──
+let allCommentsFlat = [];
+
+function initAllCommentsListener() {
+  if (!window._fb) return;
+  const { onValue, ref, db } = window._fb;
+  onValue(ref(db,'comments'), snap => {
+    const d = snap.val() || {};
+    allCommentsFlat = [];
+    Object.entries(d).forEach(([postKey, postComments]) => {
+      const post = posts.find(p=>p._key===postKey);
+      const postTitle = post ? post.title : postKey;
+      Object.entries(postComments).forEach(([ck, cv]) => {
+        allCommentsFlat.push({...cv, _key:ck, _postKey:postKey, _postTitle:postTitle});
+      });
+    });
+    allCommentsFlat.sort((a,b)=>b.ts-a.ts);
+    if (document.getElementById('ap-moderation')?.classList.contains('active')) renderModerationTab();
+  });
+}
+
+function renderModerationTab() {
+  const c = document.getElementById('ap-moderation-list');
+  if (!c) return;
+  const q   = (document.getElementById('mod-search')?.value||'').toLowerCase();
+  const fil = document.getElementById('mod-filter')?.value||'all';
+  const bannedUsers = Object.entries(allUsers).filter(([,u])=>u.banned).map(([id])=>id);
+  let items = allCommentsFlat.filter(cm => {
+    const isHidden = cm.hidden || bannedUsers.includes(cm.uid);
+    if (fil==='visible' && isHidden) return false;
+    if (fil==='hidden'  && !isHidden) return false;
+    if (q && !`${cm.text} ${cm.authorName} ${cm._postTitle}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const countEl = document.getElementById('mod-comment-count');
+  if (countEl) countEl.textContent = `${items.length} kommentar${items.length!==1?'er':''}`;
+  if (!items.length) { c.innerHTML='<div class="mod-empty">Ingen kommentarer å vise.</div>'; return; }
+  const bannedUids = new Set(bannedUsers);
+  c.innerHTML = items.map(cm => {
+    const isHidden = cm.hidden || bannedUids.has(cm.uid);
+    const ts = new Date(cm.ts).toLocaleDateString('nb-NO',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+    const likes    = cm.likes    ? Object.keys(cm.likes).length    : 0;
+    const dislikes = cm.dislikes ? Object.keys(cm.dislikes).length : 0;
+    return `<div class="mod-comment-row${isHidden?' is-banned':''}">
+      <div class="mod-comment-meta">
+        <span class="mod-comment-author">${cm.authorName||'Anonym'}${bannedUids.has(cm.uid)?'<span class="banned-badge">Bruker bannet</span>':''}</span>
+        <span class="mod-comment-post">på: ${cm._postTitle}</span>
+        <span class="mod-comment-time">${ts}</span>
+      </div>
+      <div class="mod-comment-text">${cm.text}</div>
+      <div style="display:flex;align-items:center;gap:0.35rem;font-family:'Cinzel',serif;font-size:0.55rem;color:var(--text-muted);margin-bottom:0.4rem;">
+        ${likes?`👍 ${likes}`:''} ${dislikes?`👎 ${dislikes}`:''}
+      </div>
+      <div class="mod-comment-actions">
+        <button class="ap-action-btn" onclick="toggleHideComment('${cm._postKey}','${cm._key}',${!cm.hidden})">${cm.hidden?'Vis igjen':'Skjul'}</button>
+        <button class="ap-action-btn del" onclick="deleteComment('${cm._postKey}','${cm._key}')">Slett permanent</button>
+        ${!bannedUids.has(cm.uid)?`<button class="ap-action-btn del" onclick="banUser('${cm.uid}','${cm.authorName||'bruker'}')">Bann bruker</button>`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════
+//  USER MODERATION
+// ══════════════════════════════════════════════════════
+function renderUsersTab() {
+  const c = document.getElementById('ap-users-list');
+  if (!c) return;
+  const q = (document.getElementById('users-search')?.value||'').toLowerCase();
+  let users = Object.entries(allUsers).map(([uid,u])=>({...u,uid}));
+  if (q) users = users.filter(u=>`${u.displayName||''} ${u.email||''}`.toLowerCase().includes(q));
+  users.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+  const countEl = document.getElementById('users-count');
+  if (countEl) countEl.textContent = `${users.length} bruker${users.length!==1?'e':''}`;
+  if (!users.length) { c.innerHTML='<div class="mod-empty">Ingen registrerte brukere.</div>'; return; }
+  c.innerHTML = users.map(u => {
+    const av = u.avatarUrl||u.avatarEmoji||'👤';
+    const avHtml = av.startsWith('http')||av.startsWith('data:')
+      ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+      : av;
+    const joined = u.createdAt ? new Date(u.createdAt).toLocaleDateString('nb-NO',{day:'numeric',month:'short',year:'numeric'}) : '—';
+    const isBanned = !!u.banned;
+    return `<div class="user-row${isBanned?' is-banned':''}">
+      <div class="user-row-avatar">${avHtml}</div>
+      <div class="user-row-info">
+        <div class="user-row-name">${u.displayName||'Ukjent'}</div>
+        <div class="user-row-email">${u.email||'—'}</div>
+        <div class="user-row-meta">Registrert ${joined} · E-postvarsler: ${u.emailNotifications?'På':'Av'}</div>
+      </div>
+      <span class="user-row-badge ${isBanned?'banned':'active'}">${isBanned?'Bannet':'Aktiv'}</span>
+      <div class="user-row-actions">
+        ${isBanned
+          ? `<button class="ap-action-btn" onclick="unbanUser('${u.uid}')">Opphev bann</button>`
+          : `<button class="ap-action-btn del" onclick="banUser('${u.uid}','${(u.displayName||'bruker').replace(/'/g,"\\'")}')">Bann</button>`
+        }
+        <button class="ap-action-btn del" onclick="deleteUser('${u.uid}','${(u.displayName||'bruker').replace(/'/g,"\\'")}')">Slett</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function banUser(uid, name) {
+  if (!confirm(`Bann ${name}? Alle deres kommentarer vil bli skjult.`)) return;
+  window._fb.update(window._fb.ref(window._fb.db,'/'),{[`users/${uid}/banned`]:true})
+    .then(()=>{ toast(`${name} er nå bannet`); renderUsersTab(); renderModerationTab(); });
+}
+
+function unbanUser(uid) {
+  window._fb.update(window._fb.ref(window._fb.db,'/'),{[`users/${uid}/banned`]:false})
+    .then(()=>{ toast('Bann opphevet'); renderUsersTab(); renderModerationTab(); });
+}
+
+function deleteUser(uid, name) {
+  if (!confirm(`Slett ${name} permanent? Dette fjerner profilen deres fra databasen.`)) return;
+  window._fb.remove(window._fb.ref(window._fb.db,'users/'+uid))
+    .then(()=>{ toast(`${name} slettet`); renderUsersTab(); });
 }
 
 // ══════════════════════════════════════════════════════
@@ -3256,22 +3512,26 @@ if (window._fbReady) { initFirebase(); }
 else { document.addEventListener('fb-ready', initFirebase); setTimeout(()=>{if(currentStatus==='loading')setStatus('error');},6000); }
 </script>
 <!--
-  ⚠ FIREBASE AUTH SETUP (én gang nødvendig):
-  1. Gå til Firebase Console → Authentication → Get started
-  2. Velg "Email/Password" under Sign-in providers → Enable → Save
-  3. Oppdater Realtime Database-regler til:
+  ⚠ OPPDATER Firebase Realtime Database-regler til:
      {
        "rules": {
          ".read": true,
-         "posts":  { ".write": "auth != null || auth == null" },
-         "settings": { ".write": "auth != null || auth == null" },
-         "comments": { ".write": "auth != null" },
-         "users":    {
-           "$uid": { ".write": "auth != null && auth.uid == $uid" }
+         "posts":    { ".write": true },
+         "settings": { ".write": true },
+         "comments": {
+           "$postId": {
+             "$commentId": {
+               ".write": "auth != null",
+               "likes":    { "$uid": { ".write": "auth != null && auth.uid == $uid" } },
+               "dislikes": { "$uid": { ".write": "auth != null && auth.uid == $uid" } }
+             }
+           }
+         },
+         "users": {
+           "$uid": { ".write": "auth != null && auth.uid == $uid || root.child('users').child(auth.uid).child('isAdmin').val() == true" }
          }
        }
      }
-  Etter dette er registrering, innlogging og kommentarer fullt funksjonelle.
 -->
 </body>
 </html>
