@@ -3288,7 +3288,7 @@ function initBackToTop() {
 function getInitialTheme() {
   const saved = localStorage.getItem('te_theme');
   if (saved) return saved;
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  return 'dark';
 }
 let theme = getInitialTheme();
 
