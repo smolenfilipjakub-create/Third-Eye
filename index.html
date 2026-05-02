@@ -860,7 +860,68 @@ body.light .post-card:hover { box-shadow:0 10px 36px rgba(139,100,30,0.13); }
 /* Modal entrance — snappier */
 @keyframes modal-enter { from{opacity:0;transform:scale(0.88) translateY(28px);}to{opacity:1;transform:scale(1) translateY(0);} }
 
-/* ── LIGHT MODE ── */
+/* ══════════════════════════════════════════════════════
+   VISUAL UPGRADES
+══════════════════════════════════════════════════════ */
+
+/* ── CARD ACCENT BAR (thicker, animated slide-in) ── */
+.post-card::after { width:3px; background:linear-gradient(to bottom,var(--gold),rgba(201,168,76,0.4)); border-radius:0 2px 2px 0; }
+.post-card:hover::after,.post-card.expanded::after { transform:scaleY(1); box-shadow:2px 0 12px rgba(201,168,76,0.25); }
+
+/* ── GLASSMORPHISM IN LIGHT MODE ── */
+body.light .post-card { backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); background:rgba(255,255,255,0.82); border-color:rgba(100,70,10,0.13); }
+body.light .post-card:hover { background:rgba(255,253,247,0.95); box-shadow:0 12px 40px rgba(0,0,0,0.09), inset 0 0 0 1px rgba(154,111,26,0.15); }
+body.light #about .about-card { backdrop-filter:blur(8px); background:rgba(255,255,255,0.75); }
+body.light nav { backdrop-filter:blur(20px); background:rgba(244,240,232,0.78); }
+
+/* ── MAGNETIC NAV (JS-driven, class hooks) ── */
+.nav-links a { position:relative; display:inline-block; }
+.nav-links a .mag-inner { display:inline-block; transition:transform 0.25s cubic-bezier(0.34,1.56,0.64,1); }
+
+/* ── TEXT REVEAL ── */
+.reveal-word { display:inline-block; overflow:hidden; vertical-align:bottom; }
+.reveal-word-inner { display:inline-block; transform:translateY(110%); opacity:0; transition:transform 0.55s cubic-bezier(0.22,1,0.36,1), opacity 0.4s ease; }
+.reveal-word-inner.visible { transform:translateY(0); opacity:1; }
+
+/* ── GLITCH LOGO ── */
+@keyframes glitch-logo {
+  0%,92%,100% { clip-path:none; transform:translate(0); filter:none; }
+  93%  { clip-path:inset(30% 0 50% 0); transform:translate(-3px,1px); filter:hue-rotate(90deg) brightness(1.4); }
+  94%  { clip-path:inset(60% 0 20% 0); transform:translate(3px,-1px); filter:hue-rotate(-90deg) brightness(0.8); }
+  95%  { clip-path:inset(10% 0 70% 0); transform:translate(-2px,2px); filter:none; }
+  96%  { clip-path:none; transform:translate(0); }
+  97%  { clip-path:inset(40% 0 30% 0); transform:translate(2px,-2px); filter:saturate(3); }
+  98%  { clip-path:none; transform:translate(0); filter:none; }
+}
+.nav-logo svg { animation:glitch-logo 8s steps(1) infinite; }
+
+/* ── ORBIT PARTICLES AROUND HERO EYE ── */
+.orbit-ring { position:absolute; top:50%; left:50%; pointer-events:none; }
+.orbit-particle { position:absolute; border-radius:50%; }
+.eye-icon-wrap { position:relative; display:inline-block; margin-bottom:2.5rem; }
+.eye-icon-wrap .eye-icon { margin-bottom:0; }
+
+/* ── SACRED GEOMETRY ROTATION ── */
+#geo-svg { animation:geo-rotate 90s linear infinite; transform-origin:center; }
+#geo-svg g { transform-origin:400px 400px; }
+@keyframes geo-rotate { to { transform:rotate(360deg); } }
+
+/* ── ENHANCED CARD HOVER GLOW ── */
+.post-card:hover { box-shadow:0 20px 56px rgba(201,168,76,0.12), 0 4px 16px rgba(0,0,0,0.22), inset 0 0 0 1px rgba(201,168,76,0.08) !important; }
+body.light .post-card:hover { box-shadow:0 12px 36px rgba(154,111,26,0.14), inset 0 0 0 1px rgba(154,111,26,0.12) !important; }
+
+/* ── POLISHED CARD ACCENT BAR COLOUR ── */
+.post-card::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,rgba(201,168,76,0.12),transparent); opacity:0; transition:opacity 0.4s; }
+.post-card:hover::before { opacity:1; }
+
+/* ══ CARD MOUSE-FOLLOW SPOTLIGHT ══ */
+.post-card { --mx:50%; --my:50%; }
+.post-card:hover { background-image:radial-gradient(circle 220px at var(--mx) var(--my), rgba(201,168,76,0.05) 0%, transparent 100%) !important; }
+body.light .post-card:hover { background-image:radial-gradient(circle 220px at var(--mx) var(--my), rgba(154,111,26,0.07) 0%, transparent 100%) !important; }
+
+/* ══════════════════════════════════════════════════════
+   END VISUAL UPGRADES
+══════════════════════════════════════════════════════ */
 body.light {
   --ink:  #f4f0e8;
   --ink2: #ffffff;
@@ -1173,7 +1234,8 @@ body.light #back-to-top { background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08
 
 <!-- HERO -->
 <div id="hero">
-  <svg class="eye-icon" viewBox="0 0 120 120" fill="none">
+  <div class="eye-icon-wrap" id="eye-icon-wrap">
+    <svg class="eye-icon" viewBox="0 0 120 120" fill="none">
     <circle cx="60" cy="60" r="55" stroke="rgba(201,168,76,0.12)" stroke-width="1"/>
     <circle cx="60" cy="60" r="48" stroke="rgba(201,168,76,0.2)" stroke-width="0.8"/>
     <path d="M10 60 Q60 10 110 60 Q60 110 10 60 Z" fill="rgba(201,168,76,0.07)" stroke="#c9a84c" stroke-width="1.5"/>
@@ -1191,6 +1253,7 @@ body.light #back-to-top { background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08
     <line x1="24" y1="96"  x2="16"  y2="104" stroke="#c9a84c" stroke-width="1"   opacity="0.35"/>
     <path d="M60 38 L75 65 L45 65 Z" fill="none" stroke="rgba(201,168,76,0.5)" stroke-width="0.8"/>
   </svg>
+  </div>
   <p class="hero-sub"     data-i18n="hero_sub"></p>
   <h1 class="hero-title">Third Eye</h1>
   <p class="hero-tagline" data-i18n="hero_tagline"></p>
@@ -3357,6 +3420,126 @@ function editorHr() {
 }
 
 // ══════════════════════════════════════════════════════
+//  VISUAL UPGRADES JS
+// ══════════════════════════════════════════════════════
+
+// ── MAGNETIC NAV ──
+function initMagneticNav() {
+  if (window.matchMedia('(pointer:coarse)').matches) return;
+  document.querySelectorAll('.nav-links a').forEach(link => {
+    // Wrap content in mag-inner span if not already
+    if (!link.querySelector('.mag-inner')) {
+      link.innerHTML = `<span class="mag-inner">${link.innerHTML}</span>`;
+    }
+    const inner = link.querySelector('.mag-inner');
+    link.addEventListener('mousemove', e => {
+      const r  = link.getBoundingClientRect();
+      const dx = (e.clientX - r.left - r.width  / 2) * 0.35;
+      const dy = (e.clientY - r.top  - r.height / 2) * 0.35;
+      inner.style.transform = `translate(${dx}px,${dy}px)`;
+    });
+    link.addEventListener('mouseleave', () => {
+      inner.style.transform = 'translate(0,0)';
+    });
+  });
+}
+
+// ── ORBIT PARTICLES ──
+function initOrbitParticles() {
+  const wrap = document.getElementById('eye-icon-wrap');
+  if (!wrap) return;
+  wrap.style.position = 'relative';
+
+  const PARTICLES = [
+    { r:72, speed:12, size:3.5, color:'rgba(201,168,76,0.85)', phase:0 },
+    { r:85, speed:19, size:2.5, color:'rgba(201,168,76,0.5)',  phase:Math.PI*0.66 },
+    { r:95, speed:27, size:2,   color:'rgba(90,63,160,0.7)',   phase:Math.PI*1.33 },
+    { r:65, speed:9,  size:1.5, color:'rgba(201,168,76,0.35)', phase:Math.PI*0.4 },
+    { r:100,speed:35, size:1.5, color:'rgba(90,63,160,0.4)',   phase:Math.PI },
+  ];
+
+  const dots = PARTICLES.map(p => {
+    const dot = document.createElement('div');
+    dot.className = 'orbit-particle';
+    dot.style.cssText = `width:${p.size*2}px;height:${p.size*2}px;background:${p.color};box-shadow:0 0 ${p.size*3}px ${p.color};`;
+    wrap.appendChild(dot);
+    return { el:dot, ...p };
+  });
+
+  const cx = 60, cy = 60; // centre of 120px eye icon
+  let t = 0;
+  (function tick() {
+    t += 0.016;
+    dots.forEach(d => {
+      const a  = t * (Math.PI * 2 / d.speed) + d.phase;
+      const px = cx + Math.cos(a) * d.r - d.size;
+      const py = cy + Math.sin(a) * d.r - d.size;
+      d.el.style.left = px + 'px';
+      d.el.style.top  = py + 'px';
+      // Pulse opacity
+      d.el.style.opacity = (0.6 + 0.4 * Math.sin(t * 2 + d.phase)).toFixed(2);
+    });
+    requestAnimationFrame(tick);
+  })();
+}
+
+// ── WORD-BY-WORD TEXT REVEAL ──
+function initTextReveal() {
+  const targets = document.querySelectorAll('.hero-title, .section-title');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      if (!entry.isIntersecting) return;
+      const el = entry.target;
+      if (el.dataset.revealed) return;
+      el.dataset.revealed = '1';
+      const raw = el.textContent;
+      el.innerHTML = raw.split(' ').map((word, i) =>
+        `<span class="reveal-word" style="transition-delay:${i * 0.07}s">
+           <span class="reveal-word-inner">${word}</span>
+         </span> `
+      ).join('');
+      // Small delay so CSS is applied, then trigger
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        el.querySelectorAll('.reveal-word-inner').forEach(w => w.classList.add('visible'));
+      }));
+      obs.unobserve(el);
+    });
+  }, { threshold: 0.3 });
+  targets.forEach(t => obs.observe(t));
+}
+
+// ── SACRED GEOMETRY MOUSE PARALLAX ──
+function initGeoParallax() {
+  const geo = document.getElementById('geo-svg');
+  if (!geo || window.matchMedia('(pointer:coarse)').matches) return;
+  let tx = 0, ty = 0, cx = 0, cy = 0;
+  document.addEventListener('mousemove', e => {
+    tx = (e.clientX / window.innerWidth  - 0.5) * 18;
+    ty = (e.clientY / window.innerHeight - 0.5) * 14;
+  }, { passive:true });
+  (function lerp() {
+    cx += (tx - cx) * 0.04;
+    cy += (ty - cy) * 0.04;
+    geo.style.transform = `rotate(calc(var(--geo-rot, 0deg))) translate(${cx}px,${cy}px)`;
+    requestAnimationFrame(lerp);
+  })();
+}
+
+// ── CARD TYPEWRITER ACCENT (subtle shimmer on hover) ──
+function initCardShimmer() {
+  document.addEventListener('mousemove', e => {
+    const cards = document.querySelectorAll('.post-card');
+    cards.forEach(card => {
+      const r  = card.getBoundingClientRect();
+      const dx = e.clientX - r.left;
+      const dy = e.clientY - r.top;
+      card.style.setProperty('--mx', dx + 'px');
+      card.style.setProperty('--my', dy + 'px');
+    });
+  }, { passive:true });
+}
+
+// ══════════════════════════════════════════════════════
 //  UI ENHANCEMENTS
 // ══════════════════════════════════════════════════════
 
@@ -4168,6 +4351,11 @@ document.addEventListener('DOMContentLoaded', () => {
   initScrollReveal();
   initParallax();
   initBackToTop();
+  initMagneticNav();
+  initOrbitParticles();
+  initTextReveal();
+  initGeoParallax();
+  initCardShimmer();
   document.addEventListener('keydown', e => {
     const tag = e.target.tagName;
     const inInput = tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT';
