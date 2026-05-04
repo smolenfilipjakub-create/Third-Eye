@@ -770,6 +770,46 @@ body.light .post-card:hover {
 /* ══ EYE GAZE CSS ══ */
 .eye-iris-group { transform-box:fill-box; transform-origin:center; }
 
+/* ══ ADMIN GLOW NAME ══ */
+.admin-name {
+  color: var(--gold) !important;
+  text-shadow: 0 0 8px rgba(201,168,76,0.5), 0 0 16px rgba(201,168,76,0.2);
+  font-weight: 600;
+}
+body.light .admin-name {
+  color: var(--gold) !important;
+  text-shadow: 0 0 6px rgba(138,94,16,0.4);
+}
+
+/* ══ POST ATTRIBUTION ══ */
+.post-attribution {
+  font-family: 'Cinzel', serif;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px solid rgba(201,168,76,0.08);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.2rem;
+}
+.post-attribution span { display: flex; align-items: center; gap: 0.3rem; }
+.post-attribution .attr-label { opacity: 0.7; }
+.post-attribution .attr-name  { color: var(--text); }
+.post-attribution .attr-name.admin-name {
+  color: var(--gold) !important;
+  text-shadow: 0 0 6px rgba(201,168,76,0.4);
+}
+body.light .post-attribution { border-top-color: rgba(110,75,15,0.1); }
+
+/* ══ ADMIN INDICATORS ══ */
+.admin-crown { color:var(--gold); font-size:0.72rem; margin-left:0.2rem; animation:logo-tri-fade 3s ease-in-out infinite; }
+.user-nav-btn.is-admin-user { border-color:var(--gold-dim) !important; background:var(--gold-glow) !important; }
+body.light .user-nav-btn.is-admin-user { border-color:var(--gold-dim) !important; background:var(--gold-glow) !important; }
+.ap-admin-who { font-family:'EB Garamond',serif; font-size:0.75rem; letter-spacing:0.04em; color:var(--text-muted); font-weight:normal; }
+.ap-admin-who { background:rgba(201,168,76,0.08); border:1px solid var(--border); border-radius:2px; padding:0.1rem 0.5rem; margin-left:0.25rem; }
+
 /* ══ ADMIN CHAT ══ */
 .chat-wrap { display:flex; flex-direction:column; height:calc(100vh - 220px); min-height:320px; }
 .chat-messages { flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:0.75rem; padding:1rem 0; border:1px solid var(--border); border-radius:2px; background:var(--ink); margin-bottom:1rem; padding:1rem; scroll-behavior:smooth; }
@@ -1659,7 +1699,7 @@ body.light #back-to-top { background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.08
 <!-- ═══════════════════════ ADMIN PANEL ═══════════════════════ -->
 <div id="admin-panel" class="ap-overlay">
   <div class="ap-header">
-    <span class="ap-brand">✦ Admin Panel</span>
+    <span class="ap-brand" id="ap-brand">✦ Admin Panel</span>
     <div class="ap-tab-row">
       <button class="ap-tab active" onclick="switchTab('entries')">Oppføringer</button>
       <button class="ap-tab" onclick="switchTab('stats')">Statistikk</button>
@@ -2256,6 +2296,20 @@ function checkIsAdmin(user, profile) {
   return !!(profile && profile.isAdmin);
 }
 
+// Returns true if a uid belongs to an admin
+function isAdminUid(uid) {
+  if (!uid) return false;
+  const u = allUsers[uid];
+  if (!u) return false;
+  return u.email === SUPERADMIN_EMAIL || !!u.isAdmin;
+}
+
+// Wraps a name in admin-glow span if the uid is an admin
+function nameHtml(name, uid) {
+  if (!name) return '—';
+  return isAdminUid(uid) ? `<span class="admin-name">${name}</span>` : name;
+}
+
 // ══════════════════════════════════════════════════════
 //  TRANSLATIONS
 // ══════════════════════════════════════════════════════
@@ -2433,7 +2487,6 @@ function initFirebase() {
         isAdmin = checkIsAdmin(user, userProfile);
         if (isAdmin !== wasAdmin) updateAdminState();
         else { updateUserNav(); renderPosts(); }
-        if (isAdmin) logLoginEvent(user.email);
       });
     } else {
       userProfile = {};
@@ -2442,8 +2495,20 @@ function initFirebase() {
     }
   });
 
-  // All users (for admin)
-  onValue(usersRef, snap => { allUsers = snap.val() || {}; });
+  // All users (for admin) — also re-checks current user's admin status in real-time
+  onValue(usersRef, snap => {
+    allUsers = snap.val() || {};
+    if (currentUser) {
+      const freshProfile = allUsers[currentUser.uid] || {};
+      userProfile = freshProfile;
+      const nowAdmin = checkIsAdmin(currentUser, freshProfile);
+      if (nowAdmin !== isAdmin) {
+        isAdmin = nowAdmin;
+        updateAdminState();
+      }
+    }
+    if (document.getElementById('admin-panel')?.classList.contains('open')) renderUsersTab();
+  });
 
   onValue(postsRef, snap => {
     const d = snap.val();
@@ -2646,6 +2711,7 @@ function renderPosts() {
       <p class="post-preview">${hl(preview)}</p>
       <div class="post-body">${body}</div>
       ${post.survey ? renderSurveyHTML(post._key, post.survey) : ''}
+      ${buildAttributionHtml(post)}
       <div class="post-bottom-row">
         <div class="read-toggle">${tr('read_entry')}</div>
         <button class="post-share-btn" id="share-${post._key}" onclick="sharePost(event,'${post._key}',\`${title.replace(/`/g,"'")}\`)">${tr('btn_share')}</button>
@@ -2785,6 +2851,10 @@ function submitPost() {
 
   const maxOrder = posts.length ? Math.max(...posts.map(p=>p.order||0)) : 0;
   const imageUrl  = document.getElementById('new-image-url').value.trim() || null;
+  const authorName  = userProfile.displayName || currentUser?.email?.split('@')[0] || 'Admin';
+  const authorUid   = currentUser?.uid || '';
+  const existingPost = editKey ? posts.find(p=>p._key===editKey) : null;
+
   const postData = {
     title, date, tag, preview:preview||title, body, imageUrl,
     [`title_${origLang}`]: title,
@@ -2792,8 +2862,14 @@ function submitPost() {
     [`body_${origLang}`]: body,
     originalLang: origLang,
     draft: isDraft, publishAt, survey: survey || null,
-    order: editKey ? (posts.find(p=>p._key===editKey)||{}).order||0 : maxOrder+1,
-    createdAt: editKey ? (posts.find(p=>p._key===editKey)||{}).createdAt||Date.now() : Date.now()
+    order: editKey ? (existingPost||{}).order||0 : maxOrder+1,
+    createdAt: editKey ? (existingPost||{}).createdAt||Date.now() : Date.now(),
+    // Attribution
+    authorName:  editKey ? (existingPost?.authorName||authorName) : authorName,
+    authorUid:   editKey ? (existingPost?.authorUid||authorUid)   : authorUid,
+    editorName:  editKey ? authorName : null,
+    editorUid:   editKey ? authorUid  : null,
+    editedAt:    editKey ? Date.now() : null,
   };
 
   if (editKey) {
@@ -3926,7 +4002,8 @@ async function registerUser() {
     const uid  = cred.user.uid;
     const avatar = document.querySelector('#reg-avatar-grid .avatar-opt.selected')?.dataset.emoji || AVATARS[0];
     await window._fb.set(window._fb.ref(window._fb.db,'users/'+uid), {
-      displayName: name, email, avatarEmoji: avatar, avatarUrl: '', emailNotifications: true, createdAt: Date.now()
+      displayName: name, email, avatarEmoji: avatar, avatarUrl: '',
+      emailNotifications: true, createdAt: Date.now(), isAdmin: false
     });
     closeModal('auth-modal');
     toast(tr('auth_welcome')+name+' ✓');
@@ -3961,15 +4038,25 @@ function updateUserNav() {
   if (!btn) return;
   if (currentUser) {
     btn.classList.add('logged-in');
+    btn.classList.toggle('is-admin-user', isAdmin);
     const av = userProfile.avatarUrl || userProfile.avatarEmoji || '👤';
     avSm.innerHTML = av.startsWith('http')||av.startsWith('data:')
       ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
       : av;
-    label.textContent = (userProfile.displayName||currentUser.email).split(' ')[0];
+    const name = (userProfile.displayName||currentUser.email).split(' ')[0];
+    label.innerHTML = isAdmin
+      ? `${name} <span class="admin-crown">♛</span>`
+      : name;
   } else {
-    btn.classList.remove('logged-in');
+    btn.classList.remove('logged-in','is-admin-user');
     avSm.innerHTML = '👤';
-    label.textContent = tr('user_nav_login');
+    label.innerHTML = tr('user_nav_login');
+  }
+  // Update admin panel brand to show who is logged in
+  const brand = document.getElementById('ap-brand');
+  if (brand && currentUser) {
+    const isSuperA = currentUser.email === SUPERADMIN_EMAIL;
+    brand.innerHTML = `✦ Admin Panel &nbsp;<span class="ap-admin-who">${isSuperA?'⚡ Superadmin':'⚙ Admin'}: ${(userProfile.displayName||currentUser.email.split('@')[0])}</span>`;
   }
 }
 
@@ -4221,10 +4308,28 @@ function applyAISummaryAsPreview(text) {
 }
 
 // ══════════════════════════════════════════════════════
+//  ATTRIBUTION
+// ══════════════════════════════════════════════════════
+function buildAttributionHtml(post) {
+  if (!post.authorName && !post.editorName) return '';
+  const locale = tr('date_locale');
+  const postedLabel  = lang==='no' ? 'Postet av'   : 'Posted by';
+  const editedLabel  = lang==='no' ? 'Redigert av' : 'Edited by';
+  let html = '<div class="post-attribution">';
+  if (post.authorName) {
+    html += `<span><span class="attr-label">${postedLabel}</span> <span class="attr-name ${isAdminUid(post.authorUid)?'admin-name':''}">${post.authorName}</span></span>`;
+  }
+  if (post.editorName && post.editorName !== post.authorName) {
+    const editedDate = post.editedAt ? new Date(post.editedAt).toLocaleDateString(locale,{day:'numeric',month:'short',year:'numeric'}) : '';
+    html += `<span><span class="attr-label">${editedLabel}</span> <span class="attr-name ${isAdminUid(post.editorUid)?'admin-name':''}">${post.editorName}</span>${editedDate?` <span class="attr-label">(${editedDate})</span>`:''}</span>`;
+  }
+  html += '</div>';
+  return html;
+}
+// ══════════════════════════════════════════════════════
 //  SORT
 // ══════════════════════════════════════════════════════
 function setSort(mode) {
-  sortMode = mode;
   document.getElementById('sort-btn-newest')?.classList.toggle('active', mode==='newest');
   document.getElementById('sort-btn-popular')?.classList.toggle('active', mode==='popular');
   renderPosts();
@@ -4304,7 +4409,7 @@ function renderComments(postKey) {
       <div class="comment-avatar">${avHtml}</div>
       <div class="comment-body">
         <div class="comment-meta">
-          <span class="comment-author">${c.authorName||'Anonym'}${hiddenBadge}</span>
+          <span class="comment-author">${nameHtml(c.authorName||'Anonym', c.uid)}${hiddenBadge}</span>
           <span class="comment-time">${ts}</span>
           ${hideBtn}
           ${canDel?`<button class="comment-del-btn" onclick="deleteComment('${postKey}','${c._key}')">✕</button>`:''}
@@ -4618,6 +4723,7 @@ function renderChatMessages() {
       ? `<img src="${av}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
       : av;
     const ts    = new Date(m.ts).toLocaleTimeString('nb-NO',{hour:'2-digit',minute:'2-digit'});
+    const authorDisplay = nameHtml(m.authorName || '—', m.uid);
     const fileHtml = m.fileUrl ? (
       m.fileIsImage
         ? `<img src="${m.fileUrl}" style="max-width:200px;max-height:160px;display:block;margin-top:0.4rem;border-radius:2px;cursor:pointer;" onclick="window.open('${m.fileUrl}','_blank')">`
@@ -4626,7 +4732,7 @@ function renderChatMessages() {
     return `<div class="chat-msg${isOwn?' own':''}">
       <div class="chat-avatar">${avHtml}</div>
       <div>
-        ${!isOwn?`<div class="chat-author">${m.authorName}</div>`:''}
+        <div class="chat-author">${authorDisplay}${isOwn?' <span style="opacity:0.5;font-size:0.5rem;">(deg)</span>':''}</div>
         <div class="chat-bubble">
           ${m.text?`<div class="chat-text">${m.text}</div>`:''}
           ${fileHtml}
