@@ -2507,7 +2507,12 @@ function renderPosts() {
       return bLikes - aLikes || new Date(b.date) - new Date(a.date);
     });
   } else {
-    sorted = [...visible].sort((a,b) => (a.order??0)-(b.order??0) || new Date(b.date)-new Date(a.date));
+    // Newest: sort by date descending, then by createdAt as tiebreaker
+    sorted = [...visible].sort((a,b) => {
+      const dateDiff = new Date(b.date) - new Date(a.date);
+      if (dateDiff !== 0) return dateDiff;
+      return (b.createdAt||0) - (a.createdAt||0);
+    });
   }
 
   // Search filtering
@@ -2730,7 +2735,8 @@ function submitPost() {
     [`body_${origLang}`]: body,
     originalLang: origLang,
     draft: isDraft, publishAt, survey: survey || null,
-    order: editKey ? (posts.find(p=>p._key===editKey)||{}).order||0 : maxOrder+1
+    order: editKey ? (posts.find(p=>p._key===editKey)||{}).order||0 : maxOrder+1,
+    createdAt: editKey ? (posts.find(p=>p._key===editKey)||{}).createdAt||Date.now() : Date.now()
   };
 
   if (editKey) {
